@@ -8,6 +8,20 @@ const options = {
             version: "1.0.0",
             description: "Akka Workout API 명세서",
         },
+        components: {
+            securitySchemes: {
+                'JWT TOKEN': {
+                    type: "http",
+                    scheme: "bearer",
+                    bearerFormat: "JWT",
+                },
+            },
+        },
+        security: [
+            {
+                bearerAuth: [],
+            },
+        ],
         servers: [
             {
                 url: "http://localhost:3000",
@@ -19,7 +33,7 @@ const options = {
             },
         ],
     },
-    apis: ["./src/**/*.js"],
+    apis: ["./src/routes/*.js"],
 };
 
 const swaggerSpec = swaggerJsdoc(options);
