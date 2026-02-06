@@ -35,8 +35,8 @@ const options = {
         ],
     },
     apis: [
-        path.join(process.cwd(), "src/routes/*.js"),
-        path.join(process.cwd(), "src/controllers/*.js"),
+        path.join(__dirname, "routes/*.js"),
+        path.join(__dirname, "controllers/*.js"),
     ],
 };
 
