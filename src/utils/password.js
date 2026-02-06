@@ -1,6 +1,6 @@
 /* 비밀번호 처리 */
 
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 
 const hashPassword = (password) => {
   return bcrypt.hash(password, 10);
