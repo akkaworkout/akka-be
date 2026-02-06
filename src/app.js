@@ -11,10 +11,8 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-/* ===== Swagger (개발환경에서만) ===== */
-if (process.env.NODE_ENV !== "production") {
-  app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-}
+/* ===== Swagger ===== */
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 /* ===== 기본 라우트 ===== */
 app.get("/", (req, res) => {
