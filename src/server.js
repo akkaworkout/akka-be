@@ -1,7 +1,7 @@
-require("dotenv").config();
+console.log("✅ src/server.js loaded");
 
-const app = require("./app");
 const db = require("./config/db");
+const app = require("./app");
 
 const PORT = process.env.PORT || 3000;
 

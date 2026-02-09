@@ -1,104 +1,70 @@
-const User = require("../models/user.model");
-const MonthlyGoal = require("../models/monthlyGoal.model");
+const db = require("../config/db");
 const { hashPassword, comparePassword } = require("../utils/password");
 const { createToken } = require("../utils/jwt");
 
-/**
- * 회원가입
- * - 계정 생성만 수행
- * - 토큰 발급 ❌
- */
+const checkEmail = async (email) => {
+  const [rows] = await db.query("SELECT 1 FROM users WHERE email = ? LIMIT 1", [email]);
+  return rows.length === 0;
+};
+
+const checkNickname = async (nickname) => {
+  const [rows] = await db.query("SELECT 1 FROM users WHERE nickname = ? LIMIT 1", [nickname]);
+  return rows.length === 0;
+};
+
 const register = async ({
   email,
   password,
   nickname,
-  target_budget,
-  target_exercise_count,
+  target_budget = null,
+  target_exercise_count = null,
 }) => {
-  console.log("A. register service start");
-
-  /* 필수값 검증 */
   if (!email || !password || !nickname) {
-    const err = new Error("필수 항목이 누락되었습니다");
-    err.status = 400;
-    throw err;
+    throw new Error("email, password, nickname are required");
   }
 
-  console.log("B. before findByEmail");
-  const exists = await User.findByEmail(email);
-  console.log("C. after findByEmail");
+  // (선택) 중복 체크 - UX용
+  const [emailRows] = await db.query("SELECT 1 FROM users WHERE email = ? LIMIT 1", [email]);
+  if (emailRows.length > 0) throw new Error("이미 존재하는 이메일");
 
-  if (exists) {
-    const err = new Error("이미 존재하는 이메일입니다");
-    err.status = 409;
-    throw err;
-  }
+  const [nickRows] = await db.query("SELECT 1 FROM users WHERE nickname = ? LIMIT 1", [nickname]);
+  if (nickRows.length > 0) throw new Error("이미 존재하는 닉네임");
 
-  console.log("D. before hashPassword");
   const hashed = await hashPassword(password);
-  console.log("E. after hashPassword");
 
-  console.log("F. before User.create");
-  const userId = await User.create({
-    email,
-    password: hashed,
-    nickname,
-  });
-  console.log("G. after User.create:", userId);
+  // users 테이블에는 일단 3개만 (너 스키마 기준 안전)
+  const [result] = await db.query(
+    "INSERT INTO users (email, password, nickname) VALUES (?, ?, ?)",
+    [email, hashed, nickname]
+  );
 
-  /* 이번 달 목표 생성 */
-  const now = new Date();
-  const yearMonth = `${now.getFullYear()}-${String(
-    now.getMonth() + 1
-  ).padStart(2, "0")}`;
+  const userId = result.insertId;
 
-  console.log("H. before MonthlyGoal.create");
-  await MonthlyGoal.create({
-    user_id: userId,
-    year_month: yearMonth,
-    target_budget: target_budget || 0,
-    target_exercise_count: target_exercise_count || 0,
-  });
-  console.log("I. after MonthlyGoal.create");
+  // 목표값은 users에 컬럼 없으면 넣으면 깨짐.
+  // monthly_goal 같은 테이블에 넣을지 여부는 팀 정책에 맞춰 나중에.
+  // if (target_budget !== null || target_exercise_count !== null) { ... }
 
-  // ✅ 토큰 생성 제거
-  console.log("J. register end (no token)");
-  return;
+  return createToken(userId);
 };
 
-/**
- * 로그인
- * - 성공 시 JWT 토큰 발급 ⭕
- */
 const login = async (email, password) => {
-  console.log("A. login service start");
+  const [rows] = await db.query(
+    "SELECT user_id, password FROM users WHERE email = ? LIMIT 1",
+    [email]
+  );
 
-  if (!email || !password) {
-    const err = new Error("이메일과 비밀번호를 입력하세요");
-    err.status = 400;
-    throw err;
-  }
+  if (rows.length === 0) throw new Error("유저 없음");
 
-  console.log("B. login findByEmail");
-  const user = await User.findByEmail(email);
-
-  if (!user) {
-    const err = new Error("이메일 또는 비밀번호가 올바르지 않습니다");
-    err.status = 401;
-    throw err;
-  }
-
-  console.log("C. login comparePassword");
+  const user = rows[0];
   const isMatch = await comparePassword(password, user.password);
+  if (!isMatch) throw new Error("비밀번호 틀림");
 
-  if (!isMatch) {
-    const err = new Error("이메일 또는 비밀번호가 올바르지 않습니다");
-    err.status = 401;
-    throw err;
-  }
-
-  console.log("D. login success → createToken");
   return createToken(user.user_id);
 };
 
-module.exports = { register, login };
+module.exports = {
+  checkEmail,
+  checkNickname,
+  register,
+  login,
+};
