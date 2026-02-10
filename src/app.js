@@ -1,3 +1,6 @@
+console.log("✅ src/app.js loaded");
+
+
 const express = require("express");
 const swaggerUi = require("swagger-ui-express");
 const swaggerSpec = require("./swagger");

@@ -1,3 +1,6 @@
+console.log("✅ auth.routes loaded");
+
+
 const express = require("express");
 const router = express.Router();
 const controller = require("../controllers/auth.controller");
@@ -107,5 +110,8 @@ router.post("/register", controller.register);
  *         description: 서버 오류
  */
 router.post("/login", controller.login);
+
+router.get("/check-email", controller.checkEmail);
+router.get("/check-nickname", controller.checkNickname);
 
 module.exports = router;
