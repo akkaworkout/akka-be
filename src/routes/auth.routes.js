@@ -1,6 +1,5 @@
 console.log("✅ auth.routes loaded");
 
-
 const express = require("express");
 const router = express.Router();
 const controller = require("../controllers/auth.controller");
@@ -47,8 +46,10 @@ const controller = require("../controllers/auth.controller");
  *               properties:
  *                 success:
  *                   type: boolean
+ *                   example: true
  *                 message:
  *                   type: string
+ *                   example: 회원가입 성공
  *                 data:
  *                   type: object
  *                   properties:
@@ -57,7 +58,7 @@ const controller = require("../controllers/auth.controller");
  *       400:
  *         description: 필수값 누락 또는 형식 오류
  *       409:
- *         description: 이미 존재하는 이메일
+ *         description: 이미 존재하는 이메일 또는 닉네임
  *       500:
  *         description: 서버 오류
  */
@@ -95,8 +96,10 @@ router.post("/register", controller.register);
  *               properties:
  *                 success:
  *                   type: boolean
+ *                   example: true
  *                 message:
  *                   type: string
+ *                   example: 로그인 성공
  *                 data:
  *                   type: object
  *                   properties:
@@ -111,7 +114,66 @@ router.post("/register", controller.register);
  */
 router.post("/login", controller.login);
 
+/**
+ * @swagger
+ * /auth/check-email:
+ *   get:
+ *     summary: 이메일 중복 확인
+ *     description: 이메일이 사용 가능한지 여부를 반환합니다.
+ *     parameters:
+ *       - in: query
+ *         name: email
+ *         required: true
+ *         schema:
+ *           type: string
+ *         example: akka@naver.com
+ *     responses:
+ *       200:
+ *         description: 이메일 사용 가능 여부
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 available:
+ *                   type: boolean
+ *                   description: true면 사용 가능, false면 중복
+ *                   example: false
+ */
 router.get("/check-email", controller.checkEmail);
+
+/**
+ * @swagger
+ * /auth/check-nickname:
+ *   get:
+ *     summary: 닉네임 중복 확인
+ *     description: 닉네임이 사용 가능한지 여부를 반환합니다.
+ *     parameters:
+ *       - in: query
+ *         name: nickname
+ *         required: true
+ *         schema:
+ *           type: string
+ *         example: 아카
+ *     responses:
+ *       200:
+ *         description: 닉네임 사용 가능 여부
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 available:
+ *                   type: boolean
+ *                   description: true면 사용 가능, false면 중복
+ *                   example: true
+ */
 router.get("/check-nickname", controller.checkNickname);
 
 module.exports = router;
