@@ -13,26 +13,32 @@ const app = express();
 /* ===== CORS ===== */
 const allowedOrigins = [
   "http://localhost:5173",
+  "http://127.0.0.1:5173",
   // 프론트 배포주소 있으면 여기에 추가
   // "https://너희-프론트-도메인"
 ];
 
-app.use(
-  cors({
-    origin: (origin, cb) => {
-      // Postman/서버간 호출처럼 origin 없는 요청은 허용
-      if (!origin) return cb(null, true);
+const corsOptions = {
+  origin: (origin, cb) => {
+    // Postman/서버간 호출처럼 origin 없는 요청은 허용
+    if (!origin) return cb(null, true);
 
-      if (allowedOrigins.includes(origin)) return cb(null, true);
-      return cb(new Error(`CORS blocked: ${origin}`));
-    },
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
+    // localhost 포트가 바뀌는 경우(5173 말고도)까지 허용하고 싶으면 유지
+    const isLocalhost = /^http:\/\/localhost:\d+$/.test(origin);
 
-// 프리플라이트(OPTIONS) 요청 처리
-app.options("*", cors());
+    if (allowedOrigins.includes(origin) || isLocalhost) return cb(null, true);
+
+    // ❗여기서 에러 던지지 말고 false 처리 (그래야 CORS 헤더가 덜 꼬임)
+    return cb(null, false);
+  },
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
+// 프리플라이트(OPTIONS) 요청도 동일 옵션으로 처리
+app.options("*", cors(corsOptions));
 
 /* ===== 기본 미들웨어 ===== */
 app.use(express.json());
