@@ -1,4 +1,4 @@
-console.log("src/app.js loaded");
+console.log("✅ src/app.js loaded (CORS v3)");
 
 const express = require("express");
 const cors = require("cors");
@@ -10,35 +10,37 @@ const authRoutes = require("./routes/auth.routes");
 
 const app = express();
 
+app.set("trust proxy", 1);
+
 /* ===== CORS ===== */
-const allowedOrigins = [
+const allowedOrigins = new Set([
   "http://localhost:5173",
   "http://127.0.0.1:5173",
-  // 프론트 배포주소 있으면 여기에 추가
   // "https://너희-프론트-도메인"
-];
+]);
 
 const corsOptions = {
   origin: (origin, cb) => {
-    // Postman/서버간 호출처럼 origin 없는 요청은 허용
+    console.log("CORS check origin:", origin);
+
     if (!origin) return cb(null, true);
 
-    // localhost 포트가 바뀌는 경우(5173 말고도)까지 허용하고 싶으면 유지
     const isLocalhost = /^http:\/\/localhost:\d+$/.test(origin);
 
-    if (allowedOrigins.includes(origin) || isLocalhost) return cb(null, true);
+    if (allowedOrigins.has(origin) || isLocalhost) return cb(null, true);
 
-    // ❗여기서 에러 던지지 말고 false 처리 (그래야 CORS 헤더가 덜 꼬임)
+    console.warn("❌ CORS blocked origin:", origin);
     return cb(null, false);
   },
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
+  optionsSuccessStatus: 204,
 };
 
 app.use(cors(corsOptions));
-// 프리플라이트(OPTIONS) 요청도 동일 옵션으로 처리
-app.options("*", cors(corsOptions));
+// ✅ 여기 중요: Express/router 버전에서 "*"가 깨지니 정규식으로 전체 매칭
+app.options(/.*/, cors(corsOptions));
 
 /* ===== 기본 미들웨어 ===== */
 app.use(express.json());
@@ -54,6 +56,14 @@ app.get("/", (req, res) => {
 
 app.get("/ping", (req, res) => {
   res.send("pong");
+});
+
+app.get("/__cors", (req, res) => {
+  res.json({
+    ok: true,
+    origin: req.headers.origin || null,
+    host: req.headers.host || null,
+  });
 });
 
 /* ===== Auth ===== */
