@@ -4,6 +4,7 @@ const express = require("express");
 const cors = require("cors");
 const swaggerUi = require("swagger-ui-express");
 const swaggerSpec = require("./swagger");
+const path = require("path"); // ⭐ 추가
 
 const userRoutes = require("./routes/user.routes");
 const authRoutes = require("./routes/auth.routes");
@@ -39,12 +40,19 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-// ✅ 여기 중요: Express/router 버전에서 "*"가 깨지니 정규식으로 전체 매칭
 app.options(/.*/, cors(corsOptions));
 
 /* ===== 기본 미들웨어 ===== */
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// ⭐⭐ 추가: 업로드 파일 정적 서빙 ⭐⭐
+// upload.js에서 "../../uploads"로 저장하니까
+// 실제 위치는 backend/uploads
+app.use(
+  "/uploads",
+  express.static(path.join(__dirname, "../uploads"))
+);
 
 /* ===== Swagger ===== */
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
