@@ -15,12 +15,12 @@ const createTicket = async (userId, body) => {
         throw new Error('필수 값 누락')
     }
 
-    if (ticket_type === 'COUNT' && !target_count) {
-        throw new Error('횟수권은 target_count 필요')
+    if (!target_count) {
+        throw new Error('target_count 필요')
     }
 
-    if (ticket_type === 'PERIOD' && (!start_date || !end_date)) {
-        throw new Error('기간권은 날짜 필요')
+    if (!start_date || !end_date) {
+        throw new Error('날짜 필요')
     }
 
     const ticketData = {
@@ -28,7 +28,7 @@ const createTicket = async (userId, body) => {
         exercise_type,
         color,
         ticket_type,
-        target_count: ticket_type === 'COUNT' ? target_count : null,
+        target_count,
         total_price,
         refund_price: 0,
         status: 'ACTIVE',
@@ -89,9 +89,9 @@ const endTicket = async (userId, ticketId, endReason, refundPrice) => {
 }
 
 module.exports = {
-  createTicket,
-  getTicketsByUser,
-  getTicketDetail,
-  deleteTicket,
-  endTicket
+    createTicket,
+    getTicketsByUser,
+    getTicketDetail,
+    deleteTicket,
+    endTicket
 }
