@@ -4,6 +4,9 @@ const express = require("express");
 const router = express.Router();
 const controller = require("../controllers/auth.controller");
 
+// ✅ 추가: upload middleware 불러오기
+const upload = require("../middlewares/upload");
+
 /**
  * @swagger
  * /auth/register:
@@ -62,7 +65,9 @@ const controller = require("../controllers/auth.controller");
  *       500:
  *         description: 서버 오류
  */
-router.post("/register", controller.register);
+
+// ✅ 수정: multer 적용 (file field name은 "profile")
+router.post("/register", upload.single("profile"), controller.register);
 
 /**
  * @swagger
