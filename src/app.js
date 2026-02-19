@@ -1,23 +1,25 @@
-console.log("✅ src/app.js loaded (CORS v3)");
+console.log("src/app.js loaded (CORS v3)");
 
 const express = require("express");
 const cors = require("cors");
 const swaggerUi = require("swagger-ui-express");
 const swaggerSpec = require("./swagger");
-const path = require("path"); // ⭐ 추가
+const path = require("path");
 
 const userRoutes = require("./routes/user.routes");
 const authRoutes = require("./routes/auth.routes");
+const ticketRoutes = require("./routes/ticket.routes");
+const expenseRoutes = require('./routes/expense.routes')
+const calendarRoutes = require("./routes/calendar.routes");
 
 const app = express();
 
 app.set("trust proxy", 1);
 
-/* ===== CORS ===== */
+/* CORS */
 const allowedOrigins = new Set([
   "http://localhost:5173",
   "http://127.0.0.1:5173",
-  // "https://너희-프론트-도메인"
 ]);
 
 const corsOptions = {
@@ -30,7 +32,7 @@ const corsOptions = {
 
     if (allowedOrigins.has(origin) || isLocalhost) return cb(null, true);
 
-    console.warn("❌ CORS blocked origin:", origin);
+    console.warn("CORS blocked origin:", origin);
     return cb(null, false);
   },
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
@@ -42,22 +44,20 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.options(/.*/, cors(corsOptions));
 
-/* ===== 기본 미들웨어 ===== */
+/* 기본 미들웨어 */
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ⭐⭐ 추가: 업로드 파일 정적 서빙 ⭐⭐
-// upload.js에서 "../../uploads"로 저장하니까
-// 실제 위치는 backend/uploads
+/* 파일 업로드 */
 app.use(
   "/uploads",
   express.static(path.join(__dirname, "../uploads"))
 );
 
-/* ===== Swagger ===== */
+/* Swagger */
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-/* ===== 기본 라우트 ===== */
+/* 기본 라우트 */
 app.get("/", (req, res) => {
   res.send("Hello Node Backend");
 });
@@ -74,10 +74,19 @@ app.get("/__cors", (req, res) => {
   });
 });
 
-/* ===== Auth ===== */
+/* Auth */
 app.use("/auth", authRoutes);
 
-/* ===== User ===== */
+/* User */
 app.use("/users", userRoutes);
+
+/* Ticket */
+app.use("/tickets", ticketRoutes);
+
+/* 기타비용 */
+app.use('/expense', expenseRoutes);
+
+/* Calendar */
+app.use("/calendar", calendarRoutes);
 
 module.exports = app;
