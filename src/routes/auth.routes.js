@@ -16,7 +16,7 @@ const upload = require("../middlewares/upload");
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             required:
@@ -39,35 +39,15 @@ const upload = require("../middlewares/upload");
  *               target_exercise_count:
  *                 type: number
  *                 example: 20
+ *               profile:
+ *                 type: string
+ *                 format: binary
  *     responses:
  *       201:
  *         description: 회원가입 성공
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 message:
- *                   type: string
- *                   example: 회원가입 성공
- *                 data:
- *                   type: object
- *                   properties:
- *                     token:
- *                       type: string
- *       400:
- *         description: 필수값 누락 또는 형식 오류
- *       409:
- *         description: 이미 존재하는 이메일 또는 닉네임
- *       500:
- *         description: 서버 오류
  */
-
-// ✅ 수정: multer 적용 (file field name은 "profile")
 router.post("/register", upload.single("profile"), controller.register);
+
 
 /**
  * @swagger
