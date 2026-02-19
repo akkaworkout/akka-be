@@ -11,7 +11,7 @@ const options = {
         },
         components: {
             securitySchemes: {
-                'JWT TOKEN': {
+                bearerAuth : {
                     type: "http",
                     scheme: "bearer",
                     bearerFormat: "JWT",

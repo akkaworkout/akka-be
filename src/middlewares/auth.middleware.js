@@ -11,18 +11,25 @@ const authMiddleware = (req, res, next) => {
     });
   }
 
-  // Bearer 토큰 형식 체크
-  const token = authHeader.split(" ")[1];
-  if (!token) {
+  // Bearer 형식 체크
+  const parts = authHeader.split(" ");
+  if (parts.length !== 2 || parts[0] !== "Bearer") {
     return res.status(401).json({
       success: false,
       message: "토큰 형식이 올바르지 않습니다",
     });
   }
 
+  const token = parts[1];
+
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
+
+    // payload 구조 통일
+    req.user = {
+      id: decoded.userId,
+    };
+
     next();
   } catch (err) {
     return res.status(401).json({
