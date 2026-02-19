@@ -28,8 +28,30 @@ const create = async ({ email, password, nickname }) => {
   return result.insertId;
 };
 
+/** 🔥 마이페이지 조회 */
+const findById = async (userId) => {
+  const [rows] = await db.query(
+    `
+    SELECT 
+      user_id,
+      email,
+      nickname,
+      profile_image,
+      target_budget,
+      target_exercise_count,
+      point
+    FROM users
+    WHERE user_id = ?
+    `,
+    [userId]
+  );
+
+  return rows[0];
+};
+
 module.exports = {
   findByEmail,
   findByNickname,
   create,
+  findById, // 추가
 };

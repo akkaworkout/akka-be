@@ -29,7 +29,7 @@ const options = {
                 description: "Local server",
             },
             {
-                url: "https://port-0-akka-workout-be-mkqkv57u21e615f4.sel3.cloudtype.app",
+                url: "https://api.akkaworkout.store/",
                 description: "Production server",
             },
         ],
