@@ -4,6 +4,7 @@ const express = require("express");
 const cors = require("cors");
 const swaggerUi = require("swagger-ui-express");
 const swaggerSpec = require("./swagger");
+const path = require("path");
 
 const userRoutes = require("./routes/user.routes");
 const authRoutes = require("./routes/auth.routes");
@@ -46,6 +47,12 @@ app.options(/.*/, cors(corsOptions));
 /* 기본 미들웨어 */
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+/* 파일 업로드 */
+app.use(
+  "/uploads",
+  express.static(path.join(__dirname, "../uploads"))
+);
 
 /* Swagger */
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
