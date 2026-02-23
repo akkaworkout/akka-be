@@ -1,0 +1,42 @@
+name: Deploy to cloudtype
+on:
+  push:
+    branches:
+      - main
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Connect deploy key
+        uses: cloudtype-github-actions/connect@v1
+        with:
+          token: ${{ secrets.CLOUDTYPE_TOKEN }}
+          ghtoken: ${{ secrets.GHP_TOKEN }}
+      - name: Deploy
+        uses: cloudtype-github-actions/deploy@v1
+        with:
+          token: ${{ secrets.CLOUDTYPE_TOKEN }}
+          project: minju0236/akka-be
+          stage: main
+          yaml: >
+            name: akka-workout-be
+
+            app: node@20
+
+            options:
+              install: npm install
+              env:
+                - name: MYSQL_PUBLIC_URL
+                  value: mysql://akka:akkaworkout@gondola.proxy.rlwy.net:48698/railway
+                - name: JWT_SECRET
+                  value: akka-workout-jwt-secret-2026
+              buildenv: []
+              start: node index.js
+              healthz: /ping
+              ports: "3000"
+            context:
+              git:
+                url: git@github.com:${{ github.repository }}.git
+                ref: ${{ github.ref }}
