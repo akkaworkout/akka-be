@@ -1,4 +1,4 @@
-## Auth API Server
+## AKKA WORKOUT
 
 ### Features
 - Email & nickname duplication check
