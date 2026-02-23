@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const authMiddleware = require("../middlewares/auth.middleware");
-const userModel = require("../models/user.model"); // ✅ mysql2 모델
+const userModel = require("../models/user.model");
 
 /**
  * @swagger
@@ -26,9 +26,9 @@ const userModel = require("../models/user.model"); // ✅ mysql2 모델
 
 router.get("/me", authMiddleware, async (req, res) => {
   try {
-    const userId = req.user.userId; // auth middleware에서 세팅된 값
+    const userId = req.user.id || req.user.userId || req.user.user_id;
 
-    const user = await userModel.findById(userId); // ✅ 우리가 만든 함수 사용
+    const user = await userModel.findById(userId);
 
     if (!user) {
       return res.status(404).json({
@@ -44,7 +44,7 @@ router.get("/me", authMiddleware, async (req, res) => {
         userId: user.user_id,
         email: user.email,
         nickname: user.nickname,
-        profile_image_url: user.profile_image, // DB컬럼 → 프론트용 매핑
+        profile_image_url: user.profile_image,
         target_budget: user.target_budget,
         target_exercise_count: user.target_exercise_count,
         point: user.point,
