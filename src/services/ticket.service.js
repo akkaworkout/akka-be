@@ -11,16 +11,15 @@ const createTicket = async (userId, body) => {
         end_date
     } = body
 
-    if (!exercise_type || !ticket_type || !total_price) {
+    if (
+        !exercise_type ||
+        !ticket_type ||
+        !target_count ||
+        !total_price ||
+        !start_date ||
+        !end_date
+    ) {
         throw new Error('필수 값 누락')
-    }
-
-    if (!target_count) {
-        throw new Error('target_count 필요')
-    }
-
-    if (!start_date || !end_date) {
-        throw new Error('날짜 필요')
     }
 
     const ticketData = {
@@ -29,6 +28,7 @@ const createTicket = async (userId, body) => {
         color,
         ticket_type,
         target_count,
+        remaining_count: target_count,
         total_price,
         refund_price: 0,
         status: 'ACTIVE',
