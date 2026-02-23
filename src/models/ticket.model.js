@@ -7,6 +7,7 @@ const createTicket = async (ticketData) => {
         color,
         ticket_type,
         target_count,
+        remaining_count,
         total_price,
         refund_price,
         status,
@@ -18,9 +19,9 @@ const createTicket = async (ticketData) => {
     const query = `
     INSERT INTO ticket
     (user_id, exercise_type, color, ticket_type,
-     target_count, total_price, refund_price,
-     status, end_reason, start_date, end_date)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     target_count, remaining_count, total_price,
+     refund_price, status, end_reason, start_date, end_date)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `
 
     const values = [
@@ -29,6 +30,7 @@ const createTicket = async (ticketData) => {
         color,
         ticket_type,
         target_count,
+        remaining_count,
         total_price,
         refund_price,
         status,

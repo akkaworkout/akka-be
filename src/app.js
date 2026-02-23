@@ -11,6 +11,7 @@ const authRoutes = require("./routes/auth.routes");
 const ticketRoutes = require("./routes/ticket.routes");
 const expenseRoutes = require('./routes/expense.routes')
 const calendarRoutes = require("./routes/calendar.routes");
+const exerciseRecordRouter = require('./routes/exerciseRecord.routes')
 
 const app = express();
 
@@ -88,5 +89,8 @@ app.use('/expense', expenseRoutes);
 
 /* Calendar */
 app.use("/calendar", calendarRoutes);
+
+/* 운동기록 */
+app.use('/exercise-record', exerciseRecordRouter)
 
 module.exports = app;
