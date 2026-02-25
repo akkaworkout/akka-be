@@ -65,6 +65,19 @@ const findById = async (ticketId) => {
     return rows[0]
 }
 
+const findActiveByUserId = async (userId) => {
+    const query = `
+        SELECT ticket_id, color, exercise_type
+        FROM ticket
+        WHERE user_id = ?
+        AND status = 'ACTIVE'
+        ORDER BY created_at DESC
+    `
+
+    const [rows] = await db.execute(query, [userId])
+    return rows
+}
+
 const deleteTicket = async (ticketId) => {
     const query = `
     DELETE FROM ticket
@@ -86,6 +99,7 @@ module.exports = {
     createTicket,
     findByUserId,
     findById,
+    findActiveByUserId,
     deleteTicket,
     updateStatus
 }

@@ -77,6 +77,43 @@ router.get('/', authMiddleware, ticketController.getMyTickets)
 
 /**
  * @swagger
+ * /tickets/active:
+ *   get:
+ *     summary: 진행 중인 이용권 조회
+ *     description: |
+ *       현재 ACTIVE 상태인 이용권 목록을 반환합니다.
+ *       운동 기록 작성 및 분석 페이지에서 선택용으로 사용됩니다.
+ *     tags: [Ticket]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 진행 중인 이용권 목록 반환
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   ticket_id:
+ *                     type: integer
+ *                     example: 3
+ *                   color:
+ *                     type: string
+ *                     example: "#FFE6CC"
+ *                   exercise_type:
+ *                     type: string
+ *                     example: 발레
+ *       401:
+ *         description: 인증 실패 (토큰 없음 또는 만료)
+ *       500:
+ *         description: 서버 내부 오류
+ */
+router.get('/active', authMiddleware, ticketController.getActiveTickets)
+
+/**
+ * @swagger
  * /tickets/{ticketId}:
  *   get:
  *     summary: 특정 이용권 조회
@@ -124,6 +161,13 @@ router.delete('/:ticketId', authMiddleware, ticketController.deleteTicket)
  * /tickets/{ticketId}/end:
  *   patch:
  *     summary: 이용권 종료
+ *     description: |
+ *       이용권을 종료 처리합니다.
+ *       
+ *       - status는 서버에서 자동으로 ENDED로 변경됩니다.
+ *       - end_reason은 반드시 입력해야 합니다.
+ *       - 이용권 종료는 총 완료/기간만료/환불/기타로 이루어져 있습니다. [COMPLETED, EXPIRED, REFUNDED, ETC]
+ *       - REFUNDED일 경우에만 refund_price(환불금액)를 작성합니다.
  *     tags: [Ticket]
  *     security:
  *       - bearerAuth: []
@@ -133,6 +177,7 @@ router.delete('/:ticketId', authMiddleware, ticketController.deleteTicket)
  *         required: true
  *         schema:
  *           type: integer
+ *         description: 종료할 이용권 ID
  *     requestBody:
  *       required: true
  *       content:
@@ -146,9 +191,12 @@ router.delete('/:ticketId', authMiddleware, ticketController.deleteTicket)
  *                 type: string
  *                 enum: [COMPLETED, EXPIRED, REFUNDED, ETC]
  *                 example: COMPLETED
+ *                 description: 종료 사유
  *               refund_price:
  *                 type: integer
+ *                 nullable: true
  *                 example: 200000
+ *                 description: 환불 금액 (REFUNDED일 때만 사용)
  *     responses:
  *       200:
  *         description: 종료 성공

@@ -28,13 +28,15 @@ const controller = require('../controllers/expense.controller')
  *                 example: 1
  *               category:
  *                 type: string
+ *                 enum: [운동 용품, 운동 식품, 기타]
  *                 example: 운동 식품
- *                 description: 운동 용품 | 운동 식품 | 기타
+ *                 description: 선택 가능 값은 운동 용품 | 운동 식품 | 기타
  *               title:
  *                 type: string
  *                 example: 단백질 쉐이크
  *               amount:
  *                 type: integer
+ *                 minimum: 0
  *                 example: 23000
  *               expense_date:
  *                 type: string
@@ -52,7 +54,7 @@ const controller = require('../controllers/expense.controller')
  *                   type: string
  *                   example: 지출이 등록되었습니다.
  *       400:
- *         description: 필수값 누락
+ *         description: 필수값 누락 또는 잘못된 category 값
  *       500:
  *         description: 서버 오류
  */

@@ -40,8 +40,27 @@ const createTicket = async (userId, body) => {
     return await ticketModel.createTicket(ticketData)
 }
 
-const getTicketsByUser = async (userId) => {
-    return await ticketModel.findByUserId(userId)
+const getTicketsByUser = async (userId, status, simple) => {
+    const tickets = await ticketModel.findByUserId(userId)
+
+    let filtered = tickets
+
+    if (status) {
+        filtered = filtered.filter(t => t.status === status)
+    }
+
+    if (simple === 'true') {
+        return filtered.map(t => ({
+            color: t.color,
+            exercise_type: t.exercise_type
+        }))
+    }
+
+    return filtered
+}
+
+const getActiveTickets = async (userId) => {
+    return await ticketModel.findActiveByUserId(userId)
 }
 
 const getTicketDetail = async (userId, ticketId) => {
@@ -91,7 +110,8 @@ const endTicket = async (userId, ticketId, endReason, refundPrice) => {
 module.exports = {
     createTicket,
     getTicketsByUser,
+    getActiveTickets,
     getTicketDetail,
     deleteTicket,
-    endTicket
+    endTicket,
 }
