@@ -18,7 +18,6 @@ exports.createTicket = async (req, res) => {
     }
 }
 
-
 /* 내 이용권 전체 조회 */
 exports.getMyTickets = async (req, res) => {
     try {
@@ -34,7 +33,6 @@ exports.getMyTickets = async (req, res) => {
     }
 }
 
-
 /* 특정 이용권 조회 */
 exports.getTicketDetail = async (req, res) => {
     try {
@@ -44,6 +42,22 @@ exports.getTicketDetail = async (req, res) => {
         const ticket = await ticketService.getTicketDetail(userId, ticketId)
 
         res.status(200).json(ticket)
+    } catch (error) {
+        res.status(400).json({
+            message: error.message
+        })
+    }
+}
+
+/* 진행 중인 이용권 목록 조회 */
+exports.getActiveTickets = async (req, res) => {
+    try {
+        const userId = req.user.id
+
+        const tickets = await ticketService.getActiveTickets(userId)
+
+        res.status(200).json(tickets)
+
     } catch (error) {
         res.status(400).json({
             message: error.message
