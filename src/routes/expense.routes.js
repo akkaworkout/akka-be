@@ -7,7 +7,7 @@ const controller = require('../controllers/expense.controller')
  * /expense:
  *   post:
  *     summary: 기타비용(지출) 등록
- *     description: 사용자가 운동 관련 기타비용을 등록합니다.
+ *     description: 사용자가 운동 관련 지출을 등록합니다. 카테고리는 운동 용품, 운동 식품, 기타 중 하나를 선택해야 합니다.
  *     tags:
  *       - Expense
  *     requestBody:
