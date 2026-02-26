@@ -1,6 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const controller = require('../controllers/expense.controller')
+const authMiddleware = require('../middlewares/auth.middleware')
 
 /**
  * @swagger
@@ -17,15 +18,11 @@ const controller = require('../controllers/expense.controller')
  *           schema:
  *             type: object
  *             required:
- *               - user_id
  *               - category
  *               - title
  *               - amount
  *               - expense_date
  *             properties:
- *               user_id:
- *                 type: integer
- *                 example: 1
  *               category:
  *                 type: string
  *                 enum: [운동 용품, 운동 식품, 기타]
@@ -58,6 +55,6 @@ const controller = require('../controllers/expense.controller')
  *       500:
  *         description: 서버 오류
  */
-router.post('/', controller.createExpense)
+router.post('/', authMiddleware, controller.createExpense)
 
 module.exports = router
