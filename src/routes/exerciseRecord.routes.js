@@ -15,6 +15,7 @@ const upload = require('../middlewares/upload')
  * /exercise-record:
  *   post:
  *     summary: 운동 기록 등록
+ *     description: 성공시 fail_reason(실패이유)는 공백으로 비워야합니다.
  *     tags: [ExerciseRecord]
  *     requestBody:
  *       required: true
