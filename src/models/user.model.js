@@ -18,13 +18,27 @@ const findByNickname = async (nickname) => {
   return rows[0];
 };
 
-/** 유저 생성 */
-const create = async ({ email, password, nickname }) => {
+/** 유저 생성 (회원가입: 목표예산/목표횟수 포함) */
+const create = async ({
+  email,
+  password,
+  nickname,
+  profile_image = null,
+  target_budget = 0,
+  target_exercise_count = 0,
+}) => {
   const sql = `
-    INSERT INTO users (email, password, nickname)
-    VALUES (?, ?, ?)
+    INSERT INTO users (email, password, nickname, profile_image, target_budget, target_exercise_count)
+    VALUES (?, ?, ?, ?, ?, ?)
   `;
-  const [result] = await db.query(sql, [email, password, nickname]);
+  const [result] = await db.query(sql, [
+    email,
+    password,
+    nickname,
+    profile_image,
+    target_budget,
+    target_exercise_count,
+  ]);
   return result.insertId;
 };
 
@@ -53,5 +67,5 @@ module.exports = {
   findByEmail,
   findByNickname,
   create,
-  findById, // 추가
+  findById,
 };

@@ -22,9 +22,9 @@ const register = async ({
   email,
   password,
   nickname,
-  target_budget = null,
-  target_exercise_count = null,
-  profile = null, // ✅ 추가 (컨트롤러에서 넘어옴)
+  target_budget = 0,
+  target_exercise_count = 0,
+  profile = null,
 }) => {
   if (!email || !password || !nickname) {
     throw new Error("email, password, nickname are required");
@@ -45,16 +45,16 @@ const register = async ({
 
   const hashed = await hashPassword(password);
 
-  // ✅ profile 컬럼이 있으니 같이 저장
+  // ✅ 목표값까지 같이 저장
   const [result] = await db.query(
-    "INSERT INTO users (email, password, nickname, profile) VALUES (?, ?, ?, ?)",
-    [email, hashed, nickname, profile]
+    `
+    INSERT INTO users (email, password, nickname, profile, target_budget, target_exercise_count)
+    VALUES (?, ?, ?, ?, ?, ?)
+    `,
+    [email, hashed, nickname, profile, target_budget, target_exercise_count]
   );
 
   const userId = result.insertId;
-
-  // 목표값 관련은 지금 정책대로 일단 미사용
-  // if (target_budget !== null || target_exercise_count !== null) { ... }
 
   return createToken(userId);
 };
