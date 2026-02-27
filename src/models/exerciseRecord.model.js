@@ -9,13 +9,14 @@ const createExerciseRecord = async (data) => {
     image_url,
     cost,
     ticket_id,
-    color
+    color,
+    fail_reason
   } = data
 
   const query = `
     INSERT INTO exercise_record
-    (user_id, exercise_date, success, memo, image_url, cost, ticket_id, color)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    (user_id, exercise_date, success, memo, image_url, cost, ticket_id, color, fail_reason)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `
 
   const values = [
@@ -26,7 +27,8 @@ const createExerciseRecord = async (data) => {
     image_url,
     cost,
     ticket_id,
-    color
+    color,
+    fail_reason
   ]
 
   const [result] = await db.query(query, values)
