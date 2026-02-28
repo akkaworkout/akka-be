@@ -63,9 +63,26 @@ const findById = async (userId) => {
   return rows[0];
 };
 
+/** ✅ 마이페이지 정보 수정 (필드 선택 업데이트) */
+const updateById = async (userId, updates) => {
+  const allowed = ["email", "nickname", "target_budget", "target_exercise_count", "password", "profile_image"];
+  const keys = Object.keys(updates).filter((k) => allowed.includes(k) && updates[k] !== undefined);
+
+  if (keys.length === 0) return 0;
+
+  const setClause = keys.map((k) => `${k} = ?`).join(", ");
+  const values = keys.map((k) => updates[k]);
+
+  const sql = `UPDATE users SET ${setClause} WHERE user_id = ?`;
+  const [result] = await db.query(sql, [...values, userId]);
+
+  return result.affectedRows;
+};
+
 module.exports = {
   findByEmail,
   findByNickname,
   create,
   findById,
+  updateById, // ✅ 추가
 };
