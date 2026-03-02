@@ -1,4 +1,4 @@
-console.log("src/app.js loaded (CORS v3)");
+console.log("src/app.js loaded");
 
 const express = require("express");
 const cors = require("cors");
@@ -9,9 +9,9 @@ const path = require("path");
 const userRoutes = require("./routes/user.routes");
 const authRoutes = require("./routes/auth.routes");
 const ticketRoutes = require("./routes/ticket.routes");
-const expenseRoutes = require('./routes/expense.routes')
+const expenseRoutes = require("./routes/expense.routes");
 const calendarRoutes = require("./routes/calendar.routes");
-const exerciseRecordRouter = require('./routes/exerciseRecord.routes')
+const exerciseRecordRouter = require("./routes/exerciseRecord.routes");
 
 const app = express();
 
@@ -21,20 +21,20 @@ app.set("trust proxy", 1);
 const allowedOrigins = new Set([
   "http://localhost:5173",
   "http://127.0.0.1:5173",
+  "https://akka-fe.vercel.app",
 ]);
 
 const corsOptions = {
   origin: (origin, cb) => {
-    console.log("CORS check origin:", origin);
-
     if (!origin) return cb(null, true);
 
-    const isLocalhost = /^http:\/\/localhost:\d+$/.test(origin);
+    const isLocalhost =
+      /^http:\/\/localhost:\d+$/.test(origin) ||
+      /^http:\/\/127\.0\.0\.1:\d+$/.test(origin);
 
     if (allowedOrigins.has(origin) || isLocalhost) return cb(null, true);
 
-    console.warn("CORS blocked origin:", origin);
-    return cb(null, false);
+    return cb(new Error("Not allowed by CORS"));
   },
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
@@ -43,17 +43,14 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.options(/.*/, cors(corsOptions));
+app.options("*", cors(corsOptions));
 
 /* 기본 미들웨어 */
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 /* 파일 업로드 */
-app.use(
-  "/uploads",
-  express.static(path.join(__dirname, "../uploads"))
-);
+app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 /* Swagger */
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
@@ -85,12 +82,12 @@ app.use("/users", userRoutes);
 app.use("/tickets", ticketRoutes);
 
 /* 기타비용 */
-app.use('/expense', expenseRoutes);
+app.use("/expense", expenseRoutes);
 
 /* Calendar */
 app.use("/calendar", calendarRoutes);
 
 /* 운동기록 */
-app.use('/exercise-record', exerciseRecordRouter)
+app.use("/exercise-record", exerciseRecordRouter);
 
 module.exports = app;
