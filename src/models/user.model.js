@@ -23,19 +23,19 @@ const create = async ({
   email,
   password,
   nickname,
-  profile_image = null,
+  profile = null,
   target_budget = 0,
   target_exercise_count = 0,
 }) => {
   const sql = `
-    INSERT INTO users (email, password, nickname, profile_image, target_budget, target_exercise_count)
+    INSERT INTO users (email, password, nickname, profile, target_budget, target_exercise_count)
     VALUES (?, ?, ?, ?, ?, ?)
   `;
   const [result] = await db.query(sql, [
     email,
     password,
     nickname,
-    profile_image,
+    profile,
     target_budget,
     target_exercise_count,
   ]);
@@ -50,7 +50,7 @@ const findById = async (userId) => {
       user_id,
       email,
       nickname,
-      profile_image,
+      profile,
       target_budget,
       target_exercise_count,
       point
@@ -65,8 +65,18 @@ const findById = async (userId) => {
 
 /** ✅ 마이페이지 정보 수정 (필드 선택 업데이트) */
 const updateById = async (userId, updates) => {
-  const allowed = ["email", "nickname", "target_budget", "target_exercise_count", "password", "profile_image"];
-  const keys = Object.keys(updates).filter((k) => allowed.includes(k) && updates[k] !== undefined);
+  const allowed = [
+    "email",
+    "nickname",
+    "target_budget",
+    "target_exercise_count",
+    "password",
+    "profile",
+  ];
+
+  const keys = Object.keys(updates).filter(
+    (k) => allowed.includes(k) && updates[k] !== undefined
+  );
 
   if (keys.length === 0) return 0;
 
@@ -84,5 +94,5 @@ module.exports = {
   findByNickname,
   create,
   findById,
-  updateById, // ✅ 추가
+  updateById,
 };
