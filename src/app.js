@@ -31,9 +31,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// preflight 대응
-app.options("*", cors());
-
 /* 기본 미들웨어 */
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
