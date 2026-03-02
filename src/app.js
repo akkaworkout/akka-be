@@ -18,32 +18,15 @@ const app = express();
 app.set("trust proxy", 1);
 
 /* CORS */
-const allowedOrigins = new Set([
-  "http://localhost:5173",
-  "http://127.0.0.1:5173",
-  "https://akka-fe.vercel.app",
-]);
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+  })
+);
 
-const corsOptions = {
-  origin: (origin, cb) => {
-    if (!origin) return cb(null, true);
-
-    const isLocalhost =
-      /^http:\/\/localhost:\d+$/.test(origin) ||
-      /^http:\/\/127\.0\.0\.1:\d+$/.test(origin);
-
-    if (allowedOrigins.has(origin) || isLocalhost) return cb(null, true);
-
-    return cb(new Error("Not allowed by CORS"));
-  },
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true,
-  optionsSuccessStatus: 204,
-};
-
-app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
+// preflight 대응
+app.options("*", cors());
 
 /* 기본 미들웨어 */
 app.use(express.json());
