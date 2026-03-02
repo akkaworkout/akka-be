@@ -43,7 +43,7 @@ router.get("/me", authMiddleware, async (req, res) => {
         userId: user.user_id,
         email: user.email,
         nickname: user.nickname,
-        profile_image_url: user.profile_image,
+        profile: user.profile,
         target_budget: user.target_budget,
         target_exercise_count: user.target_exercise_count,
         point: user.point,
@@ -63,7 +63,7 @@ router.get("/me", authMiddleware, async (req, res) => {
  * /users/me:
  *   patch:
  *     summary: 내 정보 수정
- *     description: 로그인한 사용자의 정보를 수정합니다. (이메일/닉네임/목표 예산/목표 운동 횟수/비밀번호)
+ *     description: 로그인한 사용자의 정보를 수정합니다. 원하는 필드만 선택적으로 수정 가능합니다.
  *     tags:
  *       - Users
  *     security:
@@ -77,19 +77,35 @@ router.get("/me", authMiddleware, async (req, res) => {
  *             properties:
  *               email:
  *                 type: string
- *                 example: newmail@naver.com
+ *                 description: 변경할 이메일 주소
+ *                 example: akka@naver.com
  *               nickname:
  *                 type: string
+ *                 description: 변경할 닉네임
  *                 example: 아카
  *               target_budget:
  *                 type: number
- *                 example: 80000
+ *                 description: 목표 예산 (원 단위)
+ *                 example: 100000
  *               target_exercise_count:
  *                 type: number
+ *                 description: 목표 운동 횟수
  *                 example: 20
  *               password:
  *                 type: string
- *                 example: newPassword123!
+ *                 description: 새 비밀번호 (8자 이상 권장)
+ *                 example: password123!
+ *               profile:
+ *                 type: string
+ *                 description: 프로필 이미지 경로 또는 URL
+ *                 example: /uploads/1712345678901-profile.png
+ *           example:
+ *             email: akka@naver.com
+ *             password: password123!
+ *             nickname: 아카
+ *             target_budget: 100000
+ *             target_exercise_count: 20
+ *             profile: /uploads/1712345678901-profile.png
  *     responses:
  *       200:
  *         description: 내 정보 수정 성공
@@ -108,7 +124,14 @@ router.patch("/me", authMiddleware, async (req, res) => {
   try {
     const userId = req.user.id || req.user.userId || req.user.user_id;
 
-    const { email, nickname, target_budget, target_exercise_count, password } = req.body;
+    const {
+      email,
+      nickname,
+      target_budget,
+      target_exercise_count,
+      password,
+      profile,
+    } = req.body;
 
     const user = await userModel.findById(userId);
 
@@ -119,7 +142,6 @@ router.patch("/me", authMiddleware, async (req, res) => {
       });
     }
 
-    // ✅ 이메일 형식/중복 체크 (email을 보내는 경우에만)
     if (email !== undefined) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -130,7 +152,6 @@ router.patch("/me", authMiddleware, async (req, res) => {
         });
       }
 
-      // 현재 이메일과 다를 때만 중복 확인
       if (String(email) !== user.email) {
         const exists = await userModel.findByEmail(String(email));
         if (exists) {
@@ -144,7 +165,6 @@ router.patch("/me", authMiddleware, async (req, res) => {
 
     const updatedData = {};
 
-    // ✅ 이메일: 바뀌는 경우에만 업데이트
     if (email !== undefined && String(email) !== user.email) {
       updatedData.email = String(email);
     }
@@ -153,6 +173,8 @@ router.patch("/me", authMiddleware, async (req, res) => {
     if (target_budget !== undefined) updatedData.target_budget = target_budget;
     if (target_exercise_count !== undefined)
       updatedData.target_exercise_count = target_exercise_count;
+
+    if (profile !== undefined) updatedData.profile = profile;
 
     if (password !== undefined) {
       const bcrypt = require("bcryptjs");
