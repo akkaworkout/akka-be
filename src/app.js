@@ -18,12 +18,18 @@ const app = express();
 app.set("trust proxy", 1);
 
 /* CORS */
-app.use(
-  cors({
-    origin: true,
-    credentials: true,
-  })
-);
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "https://akka-fe.vercel.app");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+
+  if (req.method === "OPTIONS") {
+    return res.status(204).end();
+  }
+
+  next();
+});
 
 // preflight 대응
 app.options("*", cors());
