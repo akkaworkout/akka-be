@@ -13,6 +13,9 @@ const expenseRoutes = require("./routes/expense.routes");
 const calendarRoutes = require("./routes/calendar.routes");
 const exerciseRecordRouter = require("./routes/exerciseRecord.routes");
 
+/* 🔥 추가 */
+const reportRoutes = require("./routes/report.routes");
+
 const app = express();
 
 app.set("trust proxy", 1);
@@ -86,5 +89,8 @@ app.use("/calendar", calendarRoutes);
 
 /* 운동기록 */
 app.use("/exercise-record", exerciseRecordRouter);
+
+/* 🔥 Reports (추가) */
+app.use("/reports", reportRoutes);
 
 module.exports = app;
