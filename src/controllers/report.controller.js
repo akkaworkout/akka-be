@@ -12,23 +12,29 @@ const getMonthlyReport = async (req, res) => {
       });
     }
 
-    const userId = req.user?.id; 
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "인증이 필요합니다.",
+      });
+    }
 
     const data = await reportService.getMonthlyReport({
       userId,
       year: Number(year),
       month: Number(month),
-      exerciseType: exerciseType ? String(exerciseType) : null, 
+      exerciseType: exerciseType ? String(exerciseType) : null,
     });
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: "월간 리포트 조회 성공",
       data,
     });
   } catch (error) {
     console.error("❌ report error:", error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "월간 리포트 조회 실패",
     });
