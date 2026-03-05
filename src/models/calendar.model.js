@@ -28,8 +28,6 @@ const findMonthlyRecords = async (userId, year, month) => {
       AND YEAR(e.expense_date) = ?
       AND MONTH(e.expense_date) = ?
 
-    ORDER BY date ASC
-
     UNION ALL
 
     SELECT
@@ -42,9 +40,13 @@ const findMonthlyRecords = async (userId, year, month) => {
       AND YEAR(t.created_at) = ?
       AND MONTH(t.created_at) = ?
 
-    
+    ORDER BY date ASC
     `,
-    [userId, year, month, userId, year, month]
+    [
+      userId, year, month,
+      userId, year, month,
+      userId, year, month
+    ]
   );
 
   return rows;
