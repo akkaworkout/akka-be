@@ -29,6 +29,20 @@ const findMonthlyRecords = async (userId, year, month) => {
       AND MONTH(e.expense_date) = ?
 
     ORDER BY date ASC
+
+    UNION ALL
+
+    SELECT
+      DATE(t.created_at) AS date,
+      CONCAT(t.exercise_type, ' 이용권') AS name,
+      t.color,
+      'ticket' AS type
+    FROM ticket t
+    WHERE t.user_id = ?
+      AND YEAR(t.created_at) = ?
+      AND MONTH(t.created_at) = ?
+
+    
     `,
     [userId, year, month, userId, year, month]
   );
