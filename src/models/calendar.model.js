@@ -4,41 +4,45 @@ const db = require("../config/db");
 const findMonthlyRecords = async (userId, year, month) => {
   const [rows] = await db.query(
     `
-    SELECT 
-      DATE(er.exercise_date) AS date,
-      t.exercise_type AS name,
-      er.color,
-      'exercise' AS type
-    FROM exercise_record er
-    LEFT JOIN ticket t
-      ON er.ticket_id = t.ticket_id
-    WHERE er.user_id = ?
-      AND YEAR(er.exercise_date) = ?
-      AND MONTH(er.exercise_date) = ?
+    SELECT * FROM (
 
-    UNION ALL
+      SELECT 
+        DATE(er.exercise_date) AS date,
+        t.exercise_type AS name,
+        er.color,
+        'exercise' AS type
+      FROM exercise_record er
+      LEFT JOIN ticket t
+        ON er.ticket_id = t.ticket_id
+      WHERE er.user_id = ?
+        AND YEAR(er.exercise_date) = ?
+        AND MONTH(er.exercise_date) = ?
 
-    SELECT
-      DATE(e.expense_date) AS date,
-      e.title AS name,
-      e.color,
-      'expense' AS type
-    FROM expense e
-    WHERE e.user_id = ?
-      AND YEAR(e.expense_date) = ?
-      AND MONTH(e.expense_date) = ?
+      UNION ALL
 
-    UNION ALL
+      SELECT
+        DATE(e.expense_date) AS date,
+        e.title AS name,
+        e.color,
+        'expense' AS type
+      FROM expense e
+      WHERE e.user_id = ?
+        AND YEAR(e.expense_date) = ?
+        AND MONTH(e.expense_date) = ?
 
-    SELECT
-      DATE(t.created_at) AS date,
-      CONCAT(t.exercise_type, ' 이용권') AS name,
-      t.color,
-      'ticket' AS type
-    FROM ticket t
-    WHERE t.user_id = ?
-      AND YEAR(t.created_at) = ?
-      AND MONTH(t.created_at) = ?
+      UNION ALL
+
+      SELECT
+        DATE(t.created_at) AS date,
+        CONCAT(t.exercise_type, ' 이용권') AS name,
+        t.color,
+        'ticket' AS type
+      FROM ticket t
+      WHERE t.user_id = ?
+        AND YEAR(t.created_at) = ?
+        AND MONTH(t.created_at) = ?
+
+    ) AS calendar_records
 
     ORDER BY date ASC
     `,
