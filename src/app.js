@@ -13,7 +13,7 @@ const expenseRoutes = require("./routes/expense.routes");
 const calendarRoutes = require("./routes/calendar.routes");
 const exerciseRecordRouter = require("./routes/exerciseRecord.routes");
 
-/* 🔥 추가 */
+/* 추가 */
 const reportRoutes = require("./routes/report.routes");
 
 const app = express();
@@ -50,7 +50,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 /* 파일 업로드 */
-app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 /* Swagger */
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
@@ -90,7 +90,7 @@ app.use("/calendar", calendarRoutes);
 /* 운동기록 */
 app.use("/exercise-record", exerciseRecordRouter);
 
-/* 🔥 Reports (추가) */
+/* Reports (추가) */
 app.use("/reports", reportRoutes);
 
 module.exports = app;
