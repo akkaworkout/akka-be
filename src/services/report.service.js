@@ -1,6 +1,6 @@
 const db = require("../config/db");
 
-// 월 시작/끝 범위 만들기 (YYYY-MM-01 00:00:00 ~ 다음달 01 00:00:00)
+// 월 시작/끝 범위
 const getMonthRange = (year, month) => {
   const start = new Date(year, month - 1, 1);
   const end = new Date(year, month, 1);
@@ -9,7 +9,6 @@ const getMonthRange = (year, month) => {
 
 // MySQL DAYOFWEEK: 1=일 ... 7=토
 // 우리가 원하는 배열: 월(0)~일(6)
-// 변환: ((DAYOFWEEK(date) + 5) % 7)
 const DOW_EXPR = (col) => `((DAYOFWEEK(${col}) + 5) % 7)`;
 
 const getMonthlyReport = async ({ userId, year, month, exerciseType }) => {
@@ -43,7 +42,6 @@ const getMonthlyReport = async ({ userId, year, month, exerciseType }) => {
     totalExpenseAmount: 0,
   };
 
-  // ticket + expense 합쳐서 totalExpenseAmount 만들기
   const [[ticketSumRow]] = await db.query(
     `
     SELECT COALESCE(SUM(t.total_price), 0) AS ticketSum
@@ -70,7 +68,7 @@ const getMonthlyReport = async ({ userId, year, month, exerciseType }) => {
     Number(ticketSumRow?.ticketSum ?? 0) + Number(expenseSumRow?.expenseSum ?? 0);
 
   // ---------------------------
-  // 2) Goal (선택 운동 기준) ✅ ticket join 정석
+  // 2) Goal
   // ---------------------------
   let goal = {
     exerciseType: exerciseType || "",
@@ -81,7 +79,6 @@ const getMonthlyReport = async ({ userId, year, month, exerciseType }) => {
   };
 
   if (exerciseType) {
-    // 목표 횟수: ticket의 target_count 합
     const [[targetRow]] = await db.query(
       `
       SELECT COALESCE(SUM(t.target_count), 0) AS targetCount
@@ -92,7 +89,6 @@ const getMonthlyReport = async ({ userId, year, month, exerciseType }) => {
       [userId, exerciseType]
     );
 
-    // 성공 횟수: exercise_record + ticket 조인해서 exercise_type 필터
     const [[successRow]] = await db.query(
       `
       SELECT COUNT(*) AS successCount
@@ -123,10 +119,9 @@ const getMonthlyReport = async ({ userId, year, month, exerciseType }) => {
   // ---------------------------
   // 3) Charts
   // ---------------------------
-  const exerciseByDow = Array(7).fill(0); // 월~일
-  const expenseByDow = Array(7).fill(0); // 월~일
+  const exerciseByDow = Array(7).fill(0);
+  const expenseByDow = Array(7).fill(0);
 
-  // 운동: 성공 횟수 요일별
   const [exRows] = await db.query(
     `
     SELECT ${DOW_EXPR(EXERCISE_DATE_COL)} AS dow, COUNT(*) AS cnt
@@ -146,7 +141,6 @@ const getMonthlyReport = async ({ userId, year, month, exerciseType }) => {
     if (dow >= 0 && dow <= 6) exerciseByDow[dow] = cnt;
   });
 
-  // 지출: 금액 합계 요일별
   const [expRows] = await db.query(
     `
     SELECT ${DOW_EXPR(EXPENSE_DATE_COL)} AS dow, COALESCE(SUM(e.amount), 0) AS sum_amount
@@ -168,15 +162,126 @@ const getMonthlyReport = async ({ userId, year, month, exerciseType }) => {
   const charts = { exerciseByDow, expenseByDow };
 
   // ---------------------------
-  // 4) Summary
+  // 4) Breakdown
+  // ---------------------------
+  const [exerciseRows] = await db.query(
+    `
+    SELECT t.exercise_type AS label, COUNT(*) AS count
+    FROM exercise_record er
+    JOIN ticket t ON t.ticket_id = er.ticket_id
+    WHERE er.user_id = ?
+      AND er.success = 1
+      AND ${EXERCISE_DATE_COL} >= ?
+      AND ${EXERCISE_DATE_COL} < ?
+    GROUP BY t.exercise_type
+    ORDER BY count DESC
+    `,
+    [userId, start, end]
+  );
+
+  const [noshowRows] = await db.query(
+    `
+    SELECT t.exercise_type AS label, COUNT(*) AS count
+    FROM exercise_record er
+    JOIN ticket t ON t.ticket_id = er.ticket_id
+    WHERE er.user_id = ?
+      AND er.success = 0
+      AND ${EXERCISE_DATE_COL} >= ?
+      AND ${EXERCISE_DATE_COL} < ?
+    GROUP BY t.exercise_type
+    ORDER BY count DESC
+    `,
+    [userId, start, end]
+  );
+
+  // 실패 메모 데이터
+  const [memoRowsRaw] = await db.query(
+    `
+    SELECT 
+      DATE_FORMAT(er.exercise_date,'%m/%d') AS date,
+      t.exercise_type AS category,
+      er.fail_reason AS reason
+    FROM exercise_record er
+    JOIN ticket t ON t.ticket_id = er.ticket_id
+    WHERE er.user_id = ?
+      AND er.success = 0
+      AND er.fail_reason IS NOT NULL
+      AND DATE(er.exercise_date) >= DATE(?)
+      AND DATE(er.exercise_date) < DATE(?)
+    ORDER BY er.exercise_date DESC
+    `,
+    [userId, start, end]
+  );
+
+  const memoRows = memoRowsRaw || [];
+
+  const [expenseRows] = await db.query(
+    `
+    SELECT label, SUM(amount) AS amount
+    FROM (
+      SELECT 
+        '운동비' AS label,
+        SUM(t.total_price) AS amount
+      FROM ticket t
+      WHERE t.user_id = ?
+        AND ${TICKET_DATE_COL} >= ?
+        AND ${TICKET_DATE_COL} < ?
+
+      UNION ALL
+
+      SELECT 
+        e.category AS label,
+        SUM(e.amount) AS amount
+      FROM expense e
+      WHERE e.user_id = ?
+        AND ${EXPENSE_DATE_COL} >= ?
+        AND ${EXPENSE_DATE_COL} < ?
+      GROUP BY e.category
+    ) AS combined
+    GROUP BY label
+    ORDER BY amount DESC
+    `,
+    [userId, start, end, userId, start, end]
+  );
+
+  const breakdown = {
+    exercise: exerciseRows.map((r) => ({
+      label: r.label,
+      count: Number(r.count),
+    })),
+    noshow: noshowRows.map((r) => ({
+      label: r.label,
+      count: Number(r.count),
+    })),
+    expense: expenseRows.map((r) => ({
+      label: r.label,
+      amount: Number(r.amount),
+    })),
+    failMemo: memoRows,
+  };
+
+  // ---------------------------
+  // 5) Summary
   // ---------------------------
   const summary = {};
+
+  console.log("SERVICE RESULT", {
+    period: { year, month },
+    kpi,
+    goal,
+    charts,
+    breakdown,
+    summary,
+  });
+
+
 
   return {
     period: { year, month },
     kpi,
     goal,
     charts,
+    breakdown,
     summary,
   };
 };
