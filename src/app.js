@@ -90,7 +90,7 @@ app.use("/calendar", calendarRoutes);
 /* 운동기록 */
 app.use("/exercise-record", exerciseRecordRouter);
 
-/* Reports (추가) */
+/* Reports */
 app.use("/reports", reportRoutes);
 
 module.exports = app;
