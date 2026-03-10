@@ -33,7 +33,7 @@ const findMonthlyRecords = async (userId, year, month) => {
       UNION ALL
 
       SELECT
-        DATE(t.created_at) AS date,
+        DATE(CONVERT_TZ(t.created_at,'+00:00','+09:00')) AS date,
         CONCAT(t.exercise_type, ' 이용권') AS name,
         t.color,
         'ticket' AS type
@@ -73,8 +73,8 @@ const findExerciseByDate = async (userId, start, end) => {
     LEFT JOIN ticket t
       ON er.ticket_id = t.ticket_id
     WHERE er.user_id = ?
-      AND er.created_at >= ?
-      AND er.created_at < ?
+      AND er.exercise_date >= ?
+      AND er.exercise_date < ?
     ORDER BY er.created_at ASC
     `,
     [userId, start, end]
@@ -101,6 +101,26 @@ const findExpenseByDate = async (userId, start, end) => {
     ORDER BY expense_date ASC
     `,
     [userId, start, end]
+  );
+
+  return rows;
+};
+
+// 특정 날짜 이용권 조회
+const findTicketByDate = async (userId, date) => {
+  const [rows] = await db.query(
+    `
+    SELECT
+      ticket_id AS id,
+      exercise_type,
+      color,
+      created_at
+    FROM ticket
+    WHERE user_id = ?
+    AND DATE(CONVERT_TZ(created_at,'+00:00','+09:00')) = ?
+    ORDER BY created_at ASC
+    `,
+    [userId, date]
   );
 
   return rows;
@@ -234,6 +254,7 @@ module.exports = {
   findMonthlyRecords,
   findExerciseByDate,
   findExpenseByDate,
+  findTicketByDate,
   findMonthlyTotalAmount,
   findMonthlyFailAmount,
   findMonthlySuccessCount,

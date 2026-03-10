@@ -35,6 +35,98 @@ const createExerciseRecord = async (data) => {
   return result
 }
 
+const findById = async (record_id) => {
+
+  const query = `
+    SELECT *
+    FROM exercise_record
+    WHERE record_id = ?
+  `
+
+  const [rows] = await db.query(query, [record_id])
+
+  return rows[0]
+}
+
+const updateExerciseRecord = async (record_id, data) => {
+
+  const {
+    exercise_date,
+    success,
+    memo,
+    image_url,
+    fail_reason
+  } = data
+
+  const query = `
+    UPDATE exercise_record
+    SET
+      exercise_date = ?,
+      success = ?,
+      memo = ?,
+      image_url = ?,
+      fail_reason = ?
+    WHERE record_id = ?
+  `
+
+  const values = [
+    exercise_date,
+    success,
+    memo,
+    image_url,
+    fail_reason,
+    record_id
+  ]
+
+  const [result] = await db.query(query, values)
+
+  return result
+}
+
+const deleteExerciseRecord = async (record_id) => {
+
+  const query = `
+    DELETE FROM exercise_record
+    WHERE record_id = ?
+  `
+
+  const [result] = await db.query(query, [record_id])
+
+  return result
+}
+
+const getExerciseRecordById = async (record_id) => {
+
+  const query = `
+    SELECT *
+    FROM exercise_record
+    WHERE record_id = ?
+  `
+
+  const [rows] = await db.query(query, [record_id])
+
+  return rows[0]
+}
+
+const getExerciseRecordsByUser = async (user_id) => {
+
+  const query = `
+    SELECT *
+    FROM exercise_record
+    WHERE user_id = ?
+    ORDER BY exercise_date DESC
+  `
+
+  const [rows] = await db.query(query, [user_id])
+
+  return rows
+}
+
 module.exports = {
-  createExerciseRecord
+  createExerciseRecord,
+  findById,
+  updateExerciseRecord,
+  deleteExerciseRecord,
+  getExerciseRecordById,
+  getExerciseRecordsByUser
 }

@@ -1,6 +1,11 @@
 const calendarModel = require("../models/calendar.model");
 
-// 월 전체 운동 기록 조회 (달력용)
+const toKSTDate = (date) => {
+  const kst = new Date(date.getTime() + 9 * 60 * 60 * 1000);
+  return kst.toISOString().slice(0, 10);
+};
+
+// 월 전체 기록 조회 (달력 표시용)
 const getMonthlyRecords = async (userId, year, month) => {
   if (!userId || !year || !month) {
     throw new Error("userId, year and month are required");
@@ -13,14 +18,14 @@ const getMonthlyRecords = async (userId, year, month) => {
   );
 
   return rows.map((row) => ({
-    date: row.date,
+    date: toKSTDate(new Date(row.date)),
     name: row.name,
     color: row.color,
     type: row.type,
   }));
 };
 
-// 특정 날짜 기록 조회 (운동 + 지출 병합)
+// 특정 날짜의 운동 + 지출 + 이용권 기록 조회
 const getByDate = async (userId, date) => {
   if (!userId || !date) {
     throw new Error("userId and date are required");
@@ -31,8 +36,8 @@ const getByDate = async (userId, date) => {
     throw new Error("Invalid date format (YYYY-MM-DD required)");
   }
 
-  const start = new Date(`${date}T00:00:00`);
-  const end = new Date(start);
+  const start = new Date(`${date}T00:00:00+09:00`);
+  const end = new Date(`${date}T00:00:00+09:00`);
   end.setDate(end.getDate() + 1);
 
   const exerciseRows = await calendarModel.findExerciseByDate(
@@ -50,6 +55,7 @@ const getByDate = async (userId, date) => {
     memo: row.memo,
     color: row.color,
     image_url: row.image_url,
+    date: toKSTDate(new Date(row.created_at)),
     created_at: row.created_at,
   }));
 
@@ -66,10 +72,25 @@ const getByDate = async (userId, date) => {
     title: row.title,
     amount: row.amount,
     color: row.color,
+    date: toKSTDate(new Date(row.expense_date)),
     expense_date: row.expense_date,
   }));
 
-  const records = [...exercises, ...expenses];
+  const ticketRows = await calendarModel.findTicketByDate(
+    userId,
+    date
+  );
+
+  const tickets = ticketRows.map((row) => ({
+    type: "ticket",
+    id: row.id,
+    exercise_type: row.exercise_type,
+    color: row.color,
+    date: toKSTDate(new Date(row.created_at)),
+    created_at: row.created_at,
+  }));
+
+  const records = [...exercises, ...expenses, ...tickets];
 
   return {
     date,
@@ -77,7 +98,7 @@ const getByDate = async (userId, date) => {
   };
 };
 
-/* 월 요약(summary) */
+// 월 요약 정보 조회 (지출, 실패금액, 운동횟수)
 const getMonthlySummary = async (userId, year, month) => {
   if (!userId || !year || !month) {
     throw new Error("userId, year and month are required");
@@ -125,6 +146,7 @@ const getMonthlySummary = async (userId, year, month) => {
   };
 };
 
+// 월 목표 조회
 const getMonthlyGoal = async (userId, year, month) => {
   if (!userId || !year || !month) {
     throw new Error("userId, year and month are required");
@@ -137,6 +159,7 @@ const getMonthlyGoal = async (userId, year, month) => {
   return rows.map((row) => row.goal_text);
 };
 
+// 월 목표 수정
 const updateMonthlyGoal = async (userId, year, month, goals) => {
   if (!userId || !year || !month || !Array.isArray(goals)) {
     throw new Error("Invalid input for updating monthly goal");
