@@ -12,8 +12,6 @@ const ticketRoutes = require("./routes/ticket.routes");
 const expenseRoutes = require("./routes/expense.routes");
 const calendarRoutes = require("./routes/calendar.routes");
 const exerciseRecordRouter = require("./routes/exerciseRecord.routes");
-
-/* 추가 */
 const reportRoutes = require("./routes/report.routes");
 
 const app = express();
@@ -49,8 +47,12 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-/* 파일 업로드 */
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+/* uploads 절대경로 */
+const uploadsPath = path.resolve(__dirname, "uploads");
+console.log("uploads path:", uploadsPath);
+
+/* 파일 업로드 static */
+app.use("/uploads", express.static(uploadsPath));
 
 /* Swagger */
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
