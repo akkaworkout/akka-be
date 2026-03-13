@@ -23,6 +23,7 @@ app.set("trust proxy", 1);
 /* CORS */
 const allowedOrigins = [
   "http://localhost:5173",
+  "http://localhost:5174",
   "http://localhost:3000",
   "https://akkaworkout.store"
 ];
@@ -50,7 +51,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 /* 파일 업로드 */
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use(
+  "/uploads",
+  express.static(path.resolve(__dirname, "../uploads"))
+);
 
 /* Swagger */
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
