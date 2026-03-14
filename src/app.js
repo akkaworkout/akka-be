@@ -48,15 +48,11 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-
-/* uploads 절대경로 */
-const uploadsPath = path.resolve(__dirname, "uploads");
-console.log("uploads path:", uploadsPath);
-
-/* 파일 업로드 static */
-app.use("/uploads", express.static(uploadsPath));
-
-
+/* 파일 업로드 */
+app.use(
+  "/uploads",
+  express.static(path.resolve(__dirname, "../uploads"))
+);
 
 /* Swagger */
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
