@@ -35,9 +35,7 @@ const upload = require('../middlewares/upload')
  *       500:
  *         description: 서버 에러
  */
-
 router.get('/', controller.getExerciseRecords)
-
 
 
 /**
@@ -69,9 +67,7 @@ router.get('/', controller.getExerciseRecords)
  *       500:
  *         description: 서버 에러
  */
-
 router.get('/:record_id', controller.getExerciseRecord)
-
 
 
 /**
@@ -132,9 +128,7 @@ router.get('/:record_id', controller.getExerciseRecord)
  *       500:
  *         description: 서버 에러
  */
-
 router.post('/', upload.single('image'), controller.createExerciseRecord)
-
 
 
 /**
@@ -192,9 +186,7 @@ router.post('/', upload.single('image'), controller.createExerciseRecord)
  *       500:
  *         description: 서버 에러
  */
-
 router.patch('/:record_id', upload.single('image'), controller.updateExerciseRecord)
-
 
 
 /**
@@ -223,7 +215,6 @@ router.patch('/:record_id', upload.single('image'), controller.updateExerciseRec
  *       500:
  *         description: 서버 에러
  */
-
 router.delete('/:record_id', controller.deleteExerciseRecord)
 
 module.exports = router
