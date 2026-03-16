@@ -96,11 +96,13 @@ const deleteExerciseRecord = async (record_id) => {
 }
 
 const getExerciseRecordById = async (record_id) => {
-
   const query = `
-    SELECT *
-    FROM exercise_record
-    WHERE record_id = ?
+    SELECT 
+      er.*,
+      t.exercise_type
+    FROM exercise_record er
+    JOIN ticket t ON er.ticket_id = t.ticket_id
+    WHERE er.record_id = ?
   `
 
   const [rows] = await db.query(query, [record_id])
@@ -109,12 +111,14 @@ const getExerciseRecordById = async (record_id) => {
 }
 
 const getExerciseRecordsByUser = async (user_id) => {
-
   const query = `
-    SELECT *
-    FROM exercise_record
-    WHERE user_id = ?
-    ORDER BY exercise_date DESC
+    SELECT 
+      er.*,
+      t.exercise_type
+    FROM exercise_record er
+    JOIN ticket t ON er.ticket_id = t.ticket_id
+    WHERE er.user_id = ?
+    ORDER BY er.exercise_date DESC
   `
 
   const [rows] = await db.query(query, [user_id])
