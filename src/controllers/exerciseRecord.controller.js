@@ -29,12 +29,17 @@ exports.updateExerciseRecord = async (req, res) => {
 
     const record_id = req.params.record_id
 
+    const record = await exerciseService.getExerciseRecord(record_id)
+
     const data = {
-      ...req.body
+      ...req.body,
+      exercise_date: req.body.exercise_date?.slice(0, 10)
     }
 
     if (req.file) {
       data.image_url = `/uploads/${req.file.filename}`
+    } else {
+      data.image_url = record.image_url
     }
 
     await exerciseService.updateExerciseRecord(record_id, data)
