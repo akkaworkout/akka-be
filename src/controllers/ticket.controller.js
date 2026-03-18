@@ -1,4 +1,5 @@
 const ticketService = require('../services/ticket.service')
+const { calculateTicketSummary } = require('../utils/ticket.util');
 
 /* 이용권 등록 */
 exports.createTicket = async (req, res) => {
@@ -97,3 +98,19 @@ exports.endTicket = async (req, res) => {
         res.status(400).json({ message: error.message })
     }
 }
+
+exports.getTicketSummary = async (req, res) => {
+  try {
+    const { ticketId } = req.params;
+
+    const data = await ticketService.getTicketSummary(ticketId);
+
+    if (!data) {
+      return res.status(404).json({ message: '이용권 없음' });
+    }
+
+    res.status(200).json(data);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

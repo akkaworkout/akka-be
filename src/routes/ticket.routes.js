@@ -114,6 +114,36 @@ router.get('/active', authMiddleware, ticketController.getActiveTickets)
 
 /**
  * @swagger
+ * /tickets/{ticketId}/summary:
+ *   get:
+ *     summary: 이용권 요약 정보 조회
+ *     description: 선택한 이용권의 잔여 횟수, 사용 횟수, 회당 금액을 반환
+ *     tags: [Ticket]
+ *     parameters:
+ *       - in: path
+ *         name: ticketId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: 이용권 ID
+ *     responses:
+ *       200:
+ *         description: 성공
+ *         content:
+ *           application/json:
+ *             example:
+ *               remainingCount: 24
+ *               usedCount: 15
+ *               pricePerSession: 20000
+ *       404:
+ *         description: 이용권 없음
+ *       500:
+ *         description: 서버 오류
+ */
+router.get('/:ticketId/summary', authMiddleware, ticketController.getTicketSummary);
+
+/**
+ * @swagger
  * /tickets/{ticketId}:
  *   get:
  *     summary: 특정 이용권 조회

@@ -1,4 +1,5 @@
 const ticketModel = require('../models/ticket.model')
+const { calculateTicketSummary } = require('../utils/ticket.util');
 
 const createTicket = async (userId, body) => {
     const {
@@ -107,6 +108,14 @@ const endTicket = async (userId, ticketId, endReason, refundPrice) => {
     )
 }
 
+const getTicketSummary = async (ticketId) => {
+  const ticket = await ticketModel.findById(ticketId);
+
+  if (!ticket) return null;
+
+  return calculateTicketSummary(ticket);
+};
+
 module.exports = {
     createTicket,
     getTicketsByUser,
@@ -114,4 +123,5 @@ module.exports = {
     getTicketDetail,
     deleteTicket,
     endTicket,
+    getTicketSummary
 }
