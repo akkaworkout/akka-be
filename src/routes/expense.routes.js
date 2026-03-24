@@ -57,4 +57,44 @@ const authMiddleware = require('../middlewares/auth.middleware')
  */
 router.post('/', authMiddleware, controller.createExpense)
 
+/**
+ * @swagger
+ * /expense/stats:
+ *   get:
+ *     summary: 이번달 지출 통계 조회
+ *     description: 로그인한 사용자의 이번달 지출 횟수, 총 금액, 가장 많이 쓴 카테고리를 조회합니다.
+ *     tags:
+ *       - Expense
+ *     security:
+ *       - bearerAuth: []   # JWT 토큰 필요
+ *     responses:
+ *       200:
+ *         description: 이번달 지출 통계
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     expenseCount:
+ *                       type: integer
+ *                       example: 5
+ *                     totalAmount:
+ *                       type: integer
+ *                       example: 120000
+ *                     topCategory:
+ *                       type: string
+ *                       example: 운동 식품
+ *       401:
+ *         description: 인증 실패 (토큰 없음 또는 유효하지 않음)
+ *       500:
+ *         description: 서버 오류
+ */
+router.get('/stats', authMiddleware, controller.getMonthlyExpenseStats);
+
 module.exports = router
