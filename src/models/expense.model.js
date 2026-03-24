@@ -29,6 +29,24 @@ const createExpense = async (expenseData) => {
   return result
 }
 
+const getMonthlyStats = async (user_id, yearMonth) => {
+  const query = `
+    SELECT 
+      COUNT(*) AS expense_count,
+      SUM(amount) AS total_amount,
+      category,
+      COUNT(category) AS category_count
+    FROM expense
+    WHERE user_id = ? AND DATE_FORMAT(expense_date, '%Y-%m') = ?
+    GROUP BY category
+    ORDER BY category_count DESC
+  `;
+
+  const [rows] = await db.query(query, [user_id, yearMonth]);
+  return rows;
+};
+
 module.exports = {
   createExpense,
+  getMonthlyStats
 }

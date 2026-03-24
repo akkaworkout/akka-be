@@ -61,10 +61,10 @@ exports.createExerciseRecord = async (data, file, userId) => {
             fail_reason: successValue === 0 ? fail_reason || null : null
         }
 
-        await conn.execute(
+        const [result] = await conn.execute(
             `INSERT INTO exercise_record
-            (user_id, exercise_date, success, memo, image_url, cost, ticket_id, color, fail_reason)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    (user_id, exercise_date, success, memo, image_url, cost, ticket_id, color, fail_reason)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 recordData.user_id,
                 recordData.exercise_date,
@@ -88,7 +88,7 @@ exports.createExerciseRecord = async (data, file, userId) => {
         }
 
         await conn.commit()
-
+        return result
     } catch (err) {
         await conn.rollback()
         throw err

@@ -1,4 +1,5 @@
 const expenseModel = require('../models/expense.model')
+const { getMonthlyStats } = require('../models/expense.model');
 
 const categoryColorMap = {
   '운동 용품': '#FCD7FF',
@@ -23,6 +24,30 @@ const createExpense = async (data) => {
   return await expenseModel.createExpense(expenseData)
 }
 
+const getThisMonthExpense = async (user_id) => {
+  const now = new Date();
+  const yearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+  const rows = await getMonthlyStats(user_id, yearMonth);
+
+  let totalAmount = 0;
+  let expenseCount = 0;
+  let topCategory = null;
+
+  if (rows.length > 0) {
+    expenseCount = rows.reduce((sum, r) => sum + Number(r.category_count || 0), 0);
+    totalAmount = rows.reduce((sum, r) => sum + Number(r.total_amount), 0);
+    topCategory = rows[0].category;
+  }
+
+  return {
+    expenseCount,
+    totalAmount,
+    topCategory,
+  };
+};
+
 module.exports = {
   createExpense,
+  getThisMonthExpense
 }
