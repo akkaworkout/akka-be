@@ -30,24 +30,10 @@ const findMonthlyRecords = async (userId, year, month) => {
         AND YEAR(e.expense_date) = ?
         AND MONTH(e.expense_date) = ?
 
-      UNION ALL
-
-      SELECT
-        DATE(CONVERT_TZ(t.created_at,'+00:00','+09:00')) AS date,
-        CONCAT(t.exercise_type, ' 이용권') AS name,
-        t.color,
-        'ticket' AS type
-      FROM ticket t
-      WHERE t.user_id = ?
-        AND YEAR(t.created_at) = ?
-        AND MONTH(t.created_at) = ?
-
     ) AS calendar_records
-
     ORDER BY date ASC
     `,
     [
-      userId, year, month,
       userId, year, month,
       userId, year, month
     ]
@@ -150,7 +136,7 @@ const findMonthlyTotalAmount = async (userId, year, month) => {
     [userId, year, month]
   );
 
-  return exercise.total + expense.total;
+  return Number(exercise.total) + Number(expense.total);
 };
 
 const findMonthlyFailAmount = async (userId, year, month) => {
