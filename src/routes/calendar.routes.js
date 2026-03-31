@@ -147,7 +147,7 @@ router.patch("/goal", authMiddleware, calendarController.updateMonthlyGoal);
  * /calendar/summary:
  *   get:
  *     summary: 월 요약 정보 조회
- *     description: 이번 달 총 사용 금액, 목표 예산, 실패 금액, 성공 운동 횟수, 목표 운동 횟수를 반환합니다.
+ *     description: 이번 달 총 사용 금액(운동금액+운동지출), 목표 예산, 실패 금액, 성공 운동 횟수, 목표 운동 횟수를 반환합니다.
  *     tags:
  *       - Calendar
  *     security:

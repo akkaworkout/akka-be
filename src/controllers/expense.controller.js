@@ -1,5 +1,4 @@
 const expenseService = require('../services/expense.service');
-const { getThisMonthExpense } = require('../services/expense.service');
 
 const createExpense = async (req, res) => {
   try {
@@ -59,7 +58,7 @@ const getMonthlyExpenseStats = async (req, res) => {
     }
 
     const userId = req.user.id;
-    const stats = await getThisMonthExpense(userId);
+    const stats = await expenseService.getThisMonthExpense(userId);
 
     return res.json({
       success: true,
