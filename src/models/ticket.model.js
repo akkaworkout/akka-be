@@ -86,13 +86,13 @@ const deleteTicket = async (ticketId) => {
     await db.execute(query, [ticketId])
 }
 
-const updateStatus = async (ticketId, status, endReason, refundPrice) => {
+const updateStatus = async (ticketId, status, endReason, refundPrice, lostPrice = 0) => {
     const query = `
     UPDATE ticket
-    SET status = ?, end_reason = ?, refund_price = ?
+    SET status = ?, end_reason = ?, refund_price = ?, lost_price = ?, remaining_count = 0
     WHERE ticket_id = ?
   `
-    await db.execute(query, [status, endReason, refundPrice, ticketId])
+    await db.execute(query, [status, endReason, refundPrice, lostPrice, ticketId])
 }
 
 module.exports = {

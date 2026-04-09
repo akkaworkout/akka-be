@@ -94,17 +94,24 @@ const endTicket = async (userId, ticketId, endReason, refundPrice) => {
 
     if (!endReason) throw new Error('종료 사유 필요')
 
+    let calculatedRefund = 0
+    let lostPrice = 0
+
     if (endReason === 'REFUNDED') {
         if (!refundPrice || refundPrice <= 0) {
             throw new Error('환불 금액 필요')
         }
+        calculatedRefund = refundPrice
+    } else if (endReason === 'EXPIRED') {
+        lostPrice = (ticket.total_price / ticket.target_count) * ticket.remaining_count
     }
 
     await ticketModel.updateStatus(
         ticketId,
         'ENDED',
         endReason,
-        endReason === 'REFUNDED' ? refundPrice : 0
+        calculatedRefund,
+        lostPrice
     )
 }
 
