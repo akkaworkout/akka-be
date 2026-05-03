@@ -138,11 +138,11 @@ const getMonthlySummary = async (userId, year, month) => {
 
   return {
     totalAmount,
-    targetBudget: userTargets?.target_budget || 0,
+    targetBudget: userTargets?.budget_goal || 0,
     failAmount,
     exerciseCount,
     targetExerciseCount:
-      userTargets?.target_exercise_count || 0,
+      userTargets?.exercise_goal || 0,
   };
 };
 
@@ -156,7 +156,7 @@ const getMonthlyGoal = async (userId, year, month) => {
 
   const rows = await calendarModel.findGoalsByMonth(userId, yearMonth);
 
-  return rows.map((row) => row.goal_text);
+  return rows.map((row) => row.goal);
 };
 
 // 월 목표 수정

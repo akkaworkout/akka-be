@@ -11,8 +11,8 @@ const createExpense = async (expenseData) => {
   } = expenseData
 
   const query = `
-    INSERT INTO expense
-    (user_id, category, title, amount, expense_date, color)
+    INSERT INTO expenses
+    (user_id, category, item_name, amount, expense_date, color_code)
     VALUES (?, ?, ?, ?, ?, ?)
   `
 
@@ -36,7 +36,7 @@ const getMonthlyStats = async (user_id, yearMonth) => {
       SUM(amount) AS total_amount,
       category,
       COUNT(category) AS category_count
-    FROM expense
+    FROM expenses
     WHERE user_id = ? AND DATE_FORMAT(expense_date, '%Y-%m') = ?
     GROUP BY category
     ORDER BY category_count DESC

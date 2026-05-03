@@ -24,10 +24,10 @@ const getMonthlyReport = async ({ userId, year, month, exerciseType }) => {
   const [kpiRows] = await db.query(
     `
     SELECT
-      SUM(CASE WHEN er.success = 1 THEN 1 ELSE 0 END) AS totalExerciseCount,
-      SUM(CASE WHEN er.success = 0 THEN 1 ELSE 0 END) AS noShowCount,
-      COALESCE(SUM(CASE WHEN er.success = 0 THEN er.cost ELSE 0 END), 0) AS noshowLossAmount
-    FROM exercise_record er
+      SUM(CASE WHEN er.is_success = 1 THEN 1 ELSE 0 END) AS totalExerciseCount,
+      SUM(CASE WHEN er.is_success = 0 THEN 1 ELSE 0 END) AS noShowCount,
+      COALESCE(SUM(CASE WHEN er.is_success = 0 THEN er.exercise_amount ELSE 0 END), 0) AS noshowLossAmount
+    FROM exercise_records er
     WHERE er.user_id = ?
       AND ${EXERCISE_DATE_COL} >= ?
       AND ${EXERCISE_DATE_COL} < ?
@@ -44,8 +44,8 @@ const getMonthlyReport = async ({ userId, year, month, exerciseType }) => {
 
   const [[ticketSumRow]] = await db.query(
     `
-    SELECT COALESCE(SUM(t.total_price), 0) AS ticketSum
-    FROM ticket t
+    SELECT COALESCE(SUM(t.total_amount), 0) AS ticketSum
+    FROM tickets t
     WHERE t.user_id = ?
       AND ${TICKET_DATE_COL} >= ?
       AND ${TICKET_DATE_COL} < ?
@@ -56,7 +56,7 @@ const getMonthlyReport = async ({ userId, year, month, exerciseType }) => {
   const [[expenseSumRow]] = await db.query(
     `
     SELECT COALESCE(SUM(e.amount), 0) AS expenseSum
-    FROM expense e
+    FROM expenses e
     WHERE e.user_id = ?
       AND ${EXPENSE_DATE_COL} >= ?
       AND ${EXPENSE_DATE_COL} < ?
@@ -82,7 +82,7 @@ const getMonthlyReport = async ({ userId, year, month, exerciseType }) => {
     const [[targetRow]] = await db.query(
       `
       SELECT COALESCE(SUM(t.target_count), 0) AS targetCount
-      FROM ticket t
+      FROM tickets t
       WHERE t.user_id = ?
         AND t.exercise_type = ?
       `,
@@ -92,10 +92,10 @@ const getMonthlyReport = async ({ userId, year, month, exerciseType }) => {
     const [[successRow]] = await db.query(
       `
       SELECT COUNT(*) AS successCount
-      FROM exercise_record er
-      JOIN ticket t ON t.ticket_id = er.ticket_id
+      FROM exercise_records er
+      JOIN tickets t ON t.id = er.ticket_id
       WHERE er.user_id = ?
-        AND er.success = 1
+        AND er.is_success = 1
         AND ${EXERCISE_DATE_COL} >= ?
         AND ${EXERCISE_DATE_COL} < ?
         AND t.exercise_type = ?
@@ -125,9 +125,9 @@ const getMonthlyReport = async ({ userId, year, month, exerciseType }) => {
   const [exRows] = await db.query(
     `
     SELECT ${DOW_EXPR(EXERCISE_DATE_COL)} AS dow, COUNT(*) AS cnt
-    FROM exercise_record er
+    FROM exercise_records er
     WHERE er.user_id = ?
-      AND er.success = 1
+      AND er.is_success = 1
       AND ${EXERCISE_DATE_COL} >= ?
       AND ${EXERCISE_DATE_COL} < ?
     GROUP BY dow
@@ -144,7 +144,7 @@ const getMonthlyReport = async ({ userId, year, month, exerciseType }) => {
   const [expRows] = await db.query(
     `
     SELECT ${DOW_EXPR(EXPENSE_DATE_COL)} AS dow, COALESCE(SUM(e.amount), 0) AS sum_amount
-    FROM expense e
+    FROM expenses e
     WHERE e.user_id = ?
       AND ${EXPENSE_DATE_COL} >= ?
       AND ${EXPENSE_DATE_COL} < ?
@@ -167,10 +167,10 @@ const getMonthlyReport = async ({ userId, year, month, exerciseType }) => {
   const [exerciseRows] = await db.query(
     `
     SELECT t.exercise_type AS label, COUNT(*) AS count
-    FROM exercise_record er
-    JOIN ticket t ON t.ticket_id = er.ticket_id
+    FROM exercise_records er
+    JOIN tickets t ON t.id = er.ticket_id
     WHERE er.user_id = ?
-      AND er.success = 1
+      AND er.is_success = 1
       AND ${EXERCISE_DATE_COL} >= ?
       AND ${EXERCISE_DATE_COL} < ?
     GROUP BY t.exercise_type
@@ -182,10 +182,10 @@ const getMonthlyReport = async ({ userId, year, month, exerciseType }) => {
   const [noshowRows] = await db.query(
     `
     SELECT t.exercise_type AS label, COUNT(*) AS count
-    FROM exercise_record er
-    JOIN ticket t ON t.ticket_id = er.ticket_id
+    FROM exercise_records er
+    JOIN tickets t ON t.id = er.ticket_id
     WHERE er.user_id = ?
-      AND er.success = 0
+      AND er.is_success = 0
       AND ${EXERCISE_DATE_COL} >= ?
       AND ${EXERCISE_DATE_COL} < ?
     GROUP BY t.exercise_type
@@ -200,12 +200,12 @@ const getMonthlyReport = async ({ userId, year, month, exerciseType }) => {
     SELECT 
       DATE_FORMAT(er.exercise_date,'%m/%d') AS date,
       t.exercise_type AS category,
-      er.fail_reason AS reason
-    FROM exercise_record er
-    JOIN ticket t ON t.ticket_id = er.ticket_id
+      er.failure_reason AS reason
+    FROM exercise_records er
+    JOIN tickets t ON t.id = er.ticket_id
     WHERE er.user_id = ?
-      AND er.success = 0
-      AND er.fail_reason IS NOT NULL
+      AND er.is_success = 0
+      AND er.failure_reason IS NOT NULL
       AND DATE(er.exercise_date) >= DATE(?)
       AND DATE(er.exercise_date) < DATE(?)
     ORDER BY er.exercise_date DESC
@@ -221,8 +221,8 @@ const getMonthlyReport = async ({ userId, year, month, exerciseType }) => {
     FROM (
       SELECT 
         '운동비' AS label,
-        SUM(t.total_price) AS amount
-      FROM ticket t
+        SUM(t.total_amount) AS amount
+      FROM tickets t
       WHERE t.user_id = ?
         AND ${TICKET_DATE_COL} >= ?
         AND ${TICKET_DATE_COL} < ?
@@ -232,7 +232,7 @@ const getMonthlyReport = async ({ userId, year, month, exerciseType }) => {
       SELECT 
         e.category AS label,
         SUM(e.amount) AS amount
-      FROM expense e
+      FROM expenses e
       WHERE e.user_id = ?
         AND ${EXPENSE_DATE_COL} >= ?
         AND ${EXPENSE_DATE_COL} < ?

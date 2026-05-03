@@ -17,10 +17,10 @@ const createTicket = async (ticketData) => {
     } = ticketData
 
     const query = `
-    INSERT INTO ticket
-    (user_id, exercise_type, color, ticket_type,
-     target_count, remaining_count, total_price,
-     refund_price, status, end_reason, start_date, end_date)
+    INSERT INTO tickets
+    (user_id, exercise_type, color_code, ticket_type,
+     target_count, remaining_count, total_amount,
+     refund_amount, status, end_reason, start_date, end_date)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `
 
@@ -46,7 +46,7 @@ const createTicket = async (ticketData) => {
 const findByUserId = async (userId) => {
     const query = `
     SELECT *
-    FROM ticket
+    FROM tickets
     WHERE user_id = ?
     ORDER BY created_at DESC
   `
@@ -57,8 +57,8 @@ const findByUserId = async (userId) => {
 const findById = async (ticketId) => {
     const query = `
     SELECT *
-    FROM ticket
-    WHERE ticket_id = ?
+    FROM tickets
+    WHERE id = ?
     LIMIT 1
   `
     const [rows] = await db.execute(query, [ticketId])
@@ -67,8 +67,8 @@ const findById = async (ticketId) => {
 
 const findActiveByUserId = async (userId) => {
     const query = `
-        SELECT ticket_id, color, exercise_type
-        FROM ticket
+        SELECT id, color_code, exercise_type
+        FROM tickets
         WHERE user_id = ?
         AND status = 'ACTIVE'
         ORDER BY created_at DESC
@@ -80,17 +80,17 @@ const findActiveByUserId = async (userId) => {
 
 const deleteTicket = async (ticketId) => {
     const query = `
-    DELETE FROM ticket
-    WHERE ticket_id = ?
+    DELETE FROM tickets
+    WHERE id = ?
   `
     await db.execute(query, [ticketId])
 }
 
 const updateStatus = async (ticketId, status, endReason, refundPrice, lostPrice = 0) => {
     const query = `
-    UPDATE ticket
-    SET status = ?, end_reason = ?, refund_price = ?, lost_price = ?, remaining_count = 0
-    WHERE ticket_id = ?
+    UPDATE tickets
+    SET status = ?, end_reason = ?, refund_amount = ?, forfeited_amount = ?, remaining_count = 0
+    WHERE id = ?
   `
     await db.execute(query, [status, endReason, refundPrice, lostPrice, ticketId])
 }

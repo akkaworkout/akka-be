@@ -4,9 +4,9 @@ const getTotalExerciseCount = async ({ userId, startDate, endDate }) => {
   const [rows] = await db.query(
     `
     SELECT COUNT(*) AS count
-    FROM exercise_record
+    FROM exercise_records
     WHERE user_id = ?
-      AND success = 1
+      AND is_success = 1
       AND exercise_date BETWEEN ? AND ?
     `,
     [userId, startDate, endDate]
@@ -19,9 +19,9 @@ const getNoShowCount = async ({ userId, startDate, endDate }) => {
   const [rows] = await db.query(
     `
     SELECT COUNT(*) AS count
-    FROM exercise_record
+    FROM exercise_records
     WHERE user_id = ?
-      AND success = 0
+      AND is_success = 0
       AND exercise_date BETWEEN ? AND ?
     `,
     [userId, startDate, endDate]
@@ -33,10 +33,10 @@ const getNoShowCount = async ({ userId, startDate, endDate }) => {
 const getNoShowLossAmount = async ({ userId, startDate, endDate }) => {
   const [rows] = await db.query(
     `
-    SELECT IFNULL(SUM(cost), 0) AS total
-    FROM exercise_record
+    SELECT IFNULL(SUM(exercise_amount), 0) AS total
+    FROM exercise_records
     WHERE user_id = ?
-      AND success = 0
+      AND is_success = 0
       AND exercise_date BETWEEN ? AND ?
     `,
     [userId, startDate, endDate]
@@ -49,8 +49,8 @@ const getTotalExpenseAmount = async ({ userId, startDate, endDate }) => {
   // 1) ticket: created_at 기준 (구매월)
   const [ticketRows] = await db.query(
     `
-    SELECT IFNULL(SUM(total_price), 0) AS total
-    FROM ticket
+    SELECT IFNULL(SUM(total_amount), 0) AS total
+    FROM tickets
     WHERE user_id = ?
       AND created_at BETWEEN ? AND ?
     `,
@@ -61,7 +61,7 @@ const getTotalExpenseAmount = async ({ userId, startDate, endDate }) => {
   const [expenseRows] = await db.query(
     `
     SELECT IFNULL(SUM(amount), 0) AS total
-    FROM expense
+    FROM expenses
     WHERE user_id = ?
       AND expense_date BETWEEN ? AND ?
     `,
@@ -111,10 +111,10 @@ const getSuccessCountByExerciseType = async ({
   const [rows] = await db.query(
     `
     SELECT COUNT(*) AS count
-    FROM exercise_record er
-    JOIN ticket t ON t.ticket_id = er.ticket_id
+    FROM exercise_records er
+    JOIN tickets t ON t.id = er.ticket_id
     WHERE er.user_id = ?
-      AND er.success = 1
+      AND er.is_success = 1
       AND t.exercise_type = ?
       AND er.exercise_date BETWEEN ? AND ?
     `,
