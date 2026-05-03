@@ -3,7 +3,7 @@ const db = require("../config/db");
 /** 이메일로 유저 조회 (로그인용: password 포함) */
 const findByEmail = async (email) => {
   const [rows] = await db.query(
-    "SELECT user_id, password FROM users WHERE email = ?",
+    "SELECT id, password_hash FROM users WHERE email = ?",
     [email]
   );
   return rows[0];
@@ -12,7 +12,7 @@ const findByEmail = async (email) => {
 /** 닉네임으로 유저 조회 (중복확인용) */
 const findByNickname = async (nickname) => {
   const [rows] = await db.query(
-    "SELECT user_id FROM users WHERE nickname = ?",
+    "SELECT id FROM users WHERE nickname = ?",
     [nickname]
   );
   return rows[0];
@@ -28,7 +28,7 @@ const create = async ({
   target_exercise_count = 0,
 }) => {
   const sql = `
-    INSERT INTO users (email, password, nickname, profile, target_budget, target_exercise_count)
+    INSERT INTO users (email, password_hash, nickname, profile_image_url, budget_goal, exercise_goal)
     VALUES (?, ?, ?, ?, ?, ?)
   `;
   const [result] = await db.query(sql, [
@@ -42,20 +42,20 @@ const create = async ({
   return result.insertId;
 };
 
-/** 🔥 마이페이지 조회 */
+/** 마이페이지 조회 */
 const findById = async (userId) => {
   const [rows] = await db.query(
     `
     SELECT 
-      user_id,
+      id,
       email,
       nickname,
-      profile,
-      target_budget,
-      target_exercise_count,
-      point
+      profile_image_url,
+      budget_goal,
+      exercise_goal,
+      points
     FROM users
-    WHERE user_id = ?
+    WHERE id = ?
     `,
     [userId]
   );
@@ -63,15 +63,15 @@ const findById = async (userId) => {
   return rows[0];
 };
 
-/** ✅ 마이페이지 정보 수정 (필드 선택 업데이트) */
+/** 마이페이지 정보 수정 (필드 선택 업데이트) */
 const updateById = async (userId, updates) => {
   const allowed = [
     "email",
     "nickname",
-    "target_budget",
-    "target_exercise_count",
-    "password",
-    "profile",
+    "budget_goal",
+    "exercise_goal",
+    "password_hash",
+    "profile_image_url",
   ];
 
   const keys = Object.keys(updates).filter(
@@ -83,7 +83,7 @@ const updateById = async (userId, updates) => {
   const setClause = keys.map((k) => `${k} = ?`).join(", ");
   const values = keys.map((k) => updates[k]);
 
-  const sql = `UPDATE users SET ${setClause} WHERE user_id = ?`;
+  const sql = `UPDATE users SET ${setClause} WHERE id = ?`;
   const [result] = await db.query(sql, [...values, userId]);
 
   return result.affectedRows;

@@ -14,8 +14,8 @@ const createExerciseRecord = async (data) => {
   } = data
 
   const query = `
-    INSERT INTO exercise_record
-    (user_id, exercise_date, success, memo, image_url, cost, ticket_id, color, fail_reason)
+    INSERT INTO exercise_records
+    (user_id, exercise_date, is_success, memo, image_url, exercise_amount, ticket_id, color_code, failure_reason)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `
 
@@ -39,8 +39,8 @@ const findById = async (record_id) => {
 
   const query = `
     SELECT *
-    FROM exercise_record
-    WHERE record_id = ?
+    FROM exercise_records
+    WHERE id = ?
   `
 
   const [rows] = await db.query(query, [record_id])
@@ -59,14 +59,14 @@ const updateExerciseRecord = async (record_id, data) => {
   } = data
 
   const query = `
-    UPDATE exercise_record
+    UPDATE exercise_records
     SET
       exercise_date = ?,
-      success = ?,
+      is_success = ?,
       memo = ?,
       image_url = ?,
-      fail_reason = ?
-    WHERE record_id = ?
+      failure_reason = ?
+    WHERE id = ?
   `
 
   const values = [
@@ -86,8 +86,8 @@ const updateExerciseRecord = async (record_id, data) => {
 const deleteExerciseRecord = async (record_id) => {
 
   const query = `
-    DELETE FROM exercise_record
-    WHERE record_id = ?
+    DELETE FROM exercise_records
+    WHERE id = ?
   `
 
   const [result] = await db.query(query, [record_id])
@@ -100,9 +100,9 @@ const getExerciseRecordById = async (record_id) => {
     SELECT 
       er.*,
       t.exercise_type
-    FROM exercise_record er
-    JOIN ticket t ON er.ticket_id = t.ticket_id
-    WHERE er.record_id = ?
+    FROM exercise_records er
+    JOIN tickets t ON er.ticket_id = t.id
+    WHERE er.id = ?
   `
 
   const [rows] = await db.query(query, [record_id])
@@ -115,8 +115,8 @@ const getExerciseRecordsByUser = async (user_id) => {
     SELECT 
       er.*,
       t.exercise_type
-    FROM exercise_record er
-    JOIN ticket t ON er.ticket_id = t.ticket_id
+    FROM exercise_records er
+    JOIN tickets t ON er.ticket_id = t.id
     WHERE er.user_id = ?
     ORDER BY er.exercise_date DESC
   `

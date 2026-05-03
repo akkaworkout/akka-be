@@ -27,10 +27,10 @@ const register = async ({
   profile = null,
 }) => {
   if (!email || !password || !nickname) {
-    throw new Error("email, password, nickname are required");
+    throw new Error("email, password_hash, nickname are required");
   }
 
-  // ✅ 중복 체크
+  // 중복 체크
   const [emailRows] = await db.query(
     "SELECT 1 FROM users WHERE email = ? LIMIT 1",
     [email]
@@ -45,10 +45,10 @@ const register = async ({
 
   const hashed = await hashPassword(password);
 
-  // ✅ 목표값까지 같이 저장
+  // 목표값까지 같이 저장
   const [result] = await db.query(
     `
-    INSERT INTO users (email, password, nickname, profile, target_budget, target_exercise_count)
+    INSERT INTO users (email, password_hash, nickname, profile_image_url, budget_goal, exercise_goal)
     VALUES (?, ?, ?, ?, ?, ?)
     `,
     [email, hashed, nickname, profile, target_budget, target_exercise_count]
@@ -61,17 +61,17 @@ const register = async ({
 
 const login = async (email, password) => {
   const [rows] = await db.query(
-    "SELECT user_id, password FROM users WHERE email = ? LIMIT 1",
+    "SELECT id, password_hash FROM users WHERE email = ? LIMIT 1",
     [email]
   );
 
   if (rows.length === 0) throw new Error("유저 없음");
 
   const user = rows[0];
-  const isMatch = await comparePassword(password, user.password);
+  const isMatch = await comparePassword(password, user.password_hash);
   if (!isMatch) throw new Error("비밀번호 틀림");
 
-  return createToken(user.user_id);
+  return createToken(user.id);
 };
 
 module.exports = {

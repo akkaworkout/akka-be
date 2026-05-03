@@ -21,7 +21,7 @@ exports.createExerciseRecord = async (data, file, userId) => {
         }
 
         const [ticketRows] = await conn.execute(
-            `SELECT * FROM ticket WHERE ticket_id = ? FOR UPDATE`,
+            `SELECT * FROM tickets WHERE id = ? FOR UPDATE`,
             [ticket_id]
         )
 
@@ -45,8 +45,8 @@ exports.createExerciseRecord = async (data, file, userId) => {
             throw { status: 400, message: '잔여 횟수 없음' }
         }
 
-        const cost = Math.round(ticket.total_price / ticket.target_count)
-        const color = ticket.color
+        const cost = Math.round(ticket.total_amount / ticket.target_count)
+        const color = ticket.color_code
         const image_url = file ? `/uploads/${file.filename}` : null
 
         const recordData = {
@@ -62,8 +62,8 @@ exports.createExerciseRecord = async (data, file, userId) => {
         }
 
         const [result] = await conn.execute(
-            `INSERT INTO exercise_record
-    (user_id, exercise_date, success, memo, image_url, cost, ticket_id, color, fail_reason)
+            `INSERT INTO exercise_records
+    (user_id, exercise_date, is_success, memo, image_url, exercise_amount, ticket_id, color_code, failure_reason)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 recordData.user_id,
@@ -80,9 +80,9 @@ exports.createExerciseRecord = async (data, file, userId) => {
 
         if (successValue === 1) {
             await conn.execute(
-                `UPDATE ticket
+                `UPDATE tickets
                  SET remaining_count = remaining_count - 1
-                 WHERE ticket_id = ?`,
+                 WHERE id = ?`,
                 [ticket_id]
             )
         }

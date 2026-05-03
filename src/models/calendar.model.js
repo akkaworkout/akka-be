@@ -9,11 +9,11 @@ const findMonthlyRecords = async (userId, year, month) => {
       SELECT 
         DATE(er.exercise_date) AS date,
         t.exercise_type AS name,
-        er.color,
+        er.color_code,
         'exercise' AS type
-      FROM exercise_record er
-      LEFT JOIN ticket t
-        ON er.ticket_id = t.ticket_id
+      FROM exercise_records er
+      LEFT JOIN tickets t
+        ON er.ticket_id = t.id
       WHERE er.user_id = ?
         AND YEAR(er.exercise_date) = ?
         AND MONTH(er.exercise_date) = ?
@@ -22,10 +22,10 @@ const findMonthlyRecords = async (userId, year, month) => {
 
       SELECT
         DATE(e.expense_date) AS date,
-        e.title AS name,
-        e.color,
-        'expense' AS type
-      FROM expense e
+        e.item_name AS name,
+        e.color_code,
+        'expenses' AS type
+      FROM expenses e
       WHERE e.user_id = ?
         AND YEAR(e.expense_date) = ?
         AND MONTH(e.expense_date) = ?
@@ -47,17 +47,17 @@ const findExerciseByDate = async (userId, start, end) => {
   const [rows] = await db.query(
     `
     SELECT 
-      er.record_id AS id,
-      er.success,
+      er.id,
+      er.is_success,
       er.memo,
-      er.cost,
-      er.color,
+      er.exercise_amount,
+      er.color_code,
       er.image_url,
       er.created_at,
       t.exercise_type
-    FROM exercise_record er
-    LEFT JOIN ticket t
-      ON er.ticket_id = t.ticket_id
+    FROM exercise_records er
+    LEFT JOIN tickets t
+      ON er.ticket_id = t.id
     WHERE er.user_id = ?
       AND er.exercise_date >= ?
       AND er.exercise_date < ?
@@ -74,13 +74,13 @@ const findExpenseByDate = async (userId, start, end) => {
   const [rows] = await db.query(
     `
     SELECT
-      expense_id AS id,
+      id,
       category,
-      title,
+      item_name,
       amount,
-      color,
+      color_code,
       expense_date
-    FROM expense
+    FROM expenses
     WHERE user_id = ?
       AND expense_date >= ?
       AND expense_date < ?
@@ -97,11 +97,11 @@ const findTicketByDate = async (userId, date) => {
   const [rows] = await db.query(
     `
     SELECT
-      ticket_id AS id,
+      id,
       exercise_type,
-      color,
+      color_code,
       created_at
-    FROM ticket
+    FROM tickets
     WHERE user_id = ?
     AND DATE(CONVERT_TZ(created_at,'+00:00','+09:00')) = ?
     ORDER BY created_at ASC
@@ -116,8 +116,8 @@ const findTicketByDate = async (userId, date) => {
 const findMonthlyTotalAmount = async (userId, year, month) => {
   const [[exercise]] = await db.query(
     `
-    SELECT IFNULL(SUM(cost), 0) AS total
-    FROM exercise_record
+    SELECT IFNULL(SUM(exercise_amount), 0) AS total
+    FROM exercise_records
     WHERE user_id = ?
       AND YEAR(exercise_date) = ?
       AND MONTH(exercise_date) = ?
@@ -128,7 +128,7 @@ const findMonthlyTotalAmount = async (userId, year, month) => {
   const [[expense]] = await db.query(
     `
     SELECT IFNULL(SUM(amount), 0) AS total
-    FROM expense
+    FROM expenses
     WHERE user_id = ?
       AND YEAR(expense_date) = ?
       AND MONTH(expense_date) = ?
@@ -143,13 +143,13 @@ const findMonthlyFailAmount = async (userId, year, month) => {
   const [rows] = await db.query(
     `
     SELECT 
-      t.total_price,
+      t.total_amount,
       t.target_count
-    FROM exercise_record er
-    JOIN ticket t
-      ON er.ticket_id = t.ticket_id
+    FROM exercise_records er
+    JOIN tickets t
+      ON er.ticket_id = t.id
     WHERE er.user_id = ?
-      AND er.success = 0
+      AND er.is_success = 0
       AND YEAR(er.exercise_date) = ?
       AND MONTH(er.exercise_date) = ?
     `,
@@ -159,8 +159,8 @@ const findMonthlyFailAmount = async (userId, year, month) => {
   let totalFailAmount = 0;
 
   for (const row of rows) {
-    if (row.target_count && row.total_price) {
-      totalFailAmount += row.total_price / row.target_count;
+    if (row.target_count && row.total_amount) {
+      totalFailAmount += row.total_amount / row.target_count;
     }
   }
 
@@ -171,9 +171,9 @@ const findMonthlySuccessCount = async (userId, year, month) => {
   const [[result]] = await db.query(
     `
     SELECT COUNT(*) AS count
-    FROM exercise_record
+    FROM exercise_records
     WHERE user_id = ?
-      AND success = 1
+      AND is_success = 1
       AND YEAR(exercise_date) = ?
       AND MONTH(exercise_date) = ?
     `,
@@ -186,9 +186,9 @@ const findMonthlySuccessCount = async (userId, year, month) => {
 const findUserTargets = async (userId) => {
   const [[user]] = await db.query(
     `
-    SELECT target_budget, target_exercise_count
+    SELECT budget_goal, exercise_goal
     FROM users
-    WHERE user_id = ?
+    WHERE id = ?
     `,
     [userId]
   );
@@ -200,11 +200,11 @@ const findUserTargets = async (userId) => {
 const findGoalsByMonth = async (userId, yearMonth) => {
   const [rows] = await db.query(
     `
-    SELECT \`goal_text\`
-    FROM \`calendar_goal\`
+    SELECT \`goal\`
+    FROM \`calendar_goals\`
     WHERE \`user_id\` = ?
-      AND \`year_month\` = ?
-    ORDER BY \`calendar_goal_id\` ASC
+      AND \`target_month\` = ?
+    ORDER BY \`id\` ASC
     `,
     [userId, yearMonth]
   );
@@ -216,9 +216,9 @@ const findGoalsByMonth = async (userId, yearMonth) => {
 const deleteGoalsByMonth = async (userId, yearMonth) => {
   await db.query(
     `
-    DELETE FROM \`calendar_goal\`
+    DELETE FROM \`calendar_goals\`
     WHERE \`user_id\` = ?
-      AND \`year_month\` = ?
+      AND \`target_month\` = ?
     `,
     [userId, yearMonth]
   );
@@ -228,8 +228,8 @@ const deleteGoalsByMonth = async (userId, yearMonth) => {
 const insertGoal = async (userId, yearMonth, goalText) => {
   await db.query(
     `
-    INSERT INTO \`calendar_goal\`
-      (\`user_id\`, \`year_month\`, \`goal_text\`)
+    INSERT INTO \`calendar_goals\`
+      (\`user_id\`, \`target_month\`, \`goal\`)
     VALUES (?, ?, ?)
     `,
     [userId, yearMonth, goalText]

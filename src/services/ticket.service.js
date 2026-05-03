@@ -103,7 +103,7 @@ const endTicket = async (userId, ticketId, endReason, refundPrice) => {
         }
         calculatedRefund = refundPrice
     } else if (endReason === 'EXPIRED') {
-        lostPrice = (ticket.total_price / ticket.target_count) * ticket.remaining_count
+        lostPrice = (ticket.total_amount / ticket.target_count) * ticket.remaining_count
     }
 
     await ticketModel.updateStatus(
