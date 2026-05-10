@@ -4,12 +4,12 @@ const createTicket = async (ticketData) => {
     const {
         user_id,
         exercise_type,
-        color,
+        color_code,
         ticket_type,
         target_count,
         remaining_count,
-        total_price,
-        refund_price,
+        total_amount,
+        refund_amount,
         status,
         end_reason,
         start_date,
@@ -27,12 +27,12 @@ const createTicket = async (ticketData) => {
     const values = [
         user_id,
         exercise_type,
-        color,
+        color_code,
         ticket_type,
         target_count,
         remaining_count,
-        total_price,
-        refund_price,
+        total_amount,
+        refund_amount,
         status,
         end_reason,
         start_date,
@@ -86,13 +86,13 @@ const deleteTicket = async (ticketId) => {
     await db.execute(query, [ticketId])
 }
 
-const updateStatus = async (ticketId, status, endReason, refundPrice, lostPrice = 0) => {
+const updateStatus = async (ticketId, status, endReason, refundAmount, forfeitedAmount = 0) => {
     const query = `
     UPDATE tickets
     SET status = ?, end_reason = ?, refund_amount = ?, forfeited_amount = ?, remaining_count = 0
     WHERE id = ?
   `
-    await db.execute(query, [status, endReason, refundPrice, lostPrice, ticketId])
+    await db.execute(query, [status, endReason, refundAmount, forfeitedAmount, ticketId])
 }
 
 module.exports = {

@@ -89,9 +89,9 @@ exports.endTicket = async (req, res) => {
     try {
         const userId = req.user.id
         const { ticketId } = req.params
-        const { end_reason, refund_price } = req.body
+        const { end_reason, refund_amount } = req.body
 
-        await ticketService.endTicket(userId, ticketId, end_reason, refund_price)
+        await ticketService.endTicket(userId, ticketId, end_reason, refund_amount)
 
         res.status(200).json({ message: '이용권 종료 완료' })
     } catch (error) {
