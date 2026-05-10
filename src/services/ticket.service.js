@@ -4,10 +4,10 @@ const { calculateTicketSummary } = require('../utils/ticket.util');
 const createTicket = async (userId, body) => {
     const {
         exercise_type,
-        color,
+        color_code,
         ticket_type,
         target_count,
-        total_price,
+        total_amount,
         start_date,
         end_date
     } = body
@@ -16,7 +16,7 @@ const createTicket = async (userId, body) => {
         !exercise_type ||
         !ticket_type ||
         !target_count ||
-        !total_price ||
+        !total_amount ||
         !start_date ||
         !end_date
     ) {
@@ -26,12 +26,12 @@ const createTicket = async (userId, body) => {
     const ticketData = {
         user_id: userId,
         exercise_type,
-        color,
+        color_code,
         ticket_type,
         target_count,
         remaining_count: target_count,
-        total_price,
-        refund_price: 0,
+        total_amount,
+        refund_amount: 0,
         status: 'ACTIVE',
         end_reason: null,
         start_date,
@@ -52,7 +52,7 @@ const getTicketsByUser = async (userId, status, simple) => {
 
     if (simple === 'true') {
         return filtered.map(t => ({
-            color: t.color,
+            color_code: t.color_code,
             exercise_type: t.exercise_type
         }))
     }
@@ -82,7 +82,7 @@ const deleteTicket = async (userId, ticketId) => {
     await ticketModel.deleteTicket(ticketId)
 }
 
-const endTicket = async (userId, ticketId, endReason, refundPrice) => {
+const endTicket = async (userId, ticketId, endReason, refundAmount) => {
     const ticket = await ticketModel.findById(ticketId)
 
     if (!ticket) throw new Error('티켓 없음')
@@ -94,33 +94,31 @@ const endTicket = async (userId, ticketId, endReason, refundPrice) => {
 
     if (!endReason) throw new Error('종료 사유 필요')
 
-    let calculatedRefund = 0
-    let lostPrice = 0
+    let forfeitedAmount  = 0
 
     if (endReason === 'REFUNDED') {
-        if (!refundPrice || refundPrice <= 0) {
+        if (!refundAmount || refundAmount <= 0) {
             throw new Error('환불 금액 필요')
         }
-        calculatedRefund = refundPrice
     } else if (endReason === 'EXPIRED') {
-        lostPrice = (ticket.total_amount / ticket.target_count) * ticket.remaining_count
+        forfeitedAmount = (ticket.total_amount / ticket.target_count) * ticket.remaining_count
     }
 
     await ticketModel.updateStatus(
         ticketId,
         'ENDED',
         endReason,
-        calculatedRefund,
-        lostPrice
+        refundAmount,
+        forfeitedAmount
     )
 }
 
 const getTicketSummary = async (ticketId) => {
-  const ticket = await ticketModel.findById(ticketId);
+    const ticket = await ticketModel.findById(ticketId);
 
-  if (!ticket) return null;
+    if (!ticket) return null;
 
-  return calculateTicketSummary(ticket);
+    return calculateTicketSummary(ticket);
 };
 
 module.exports = {

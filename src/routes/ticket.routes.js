@@ -27,12 +27,12 @@ const authMiddleware = require('../middlewares/auth.middleware')
  *             required:
  *               - exercise_type
  *               - ticket_type
- *               - total_price
+ *               - total_amount
  *             properties:
  *               exercise_type:
  *                 type: string
  *                 example: 발레
- *               color:
+ *               color_code:
  *                 type: string
  *                 example: "#FFE6CC"
  *               ticket_type:
@@ -42,7 +42,7 @@ const authMiddleware = require('../middlewares/auth.middleware')
  *               target_count:
  *                 type: integer
  *                 example: 24
- *               total_price:
+ *               total_amount:
  *                 type: integer
  *                 example: 480000
  *               start_date:
@@ -99,7 +99,7 @@ router.get('/', authMiddleware, ticketController.getMyTickets)
  *                   ticket_id:
  *                     type: integer
  *                     example: 3
- *                   color:
+ *                   color_code:
  *                     type: string
  *                     example: "#FFE6CC"
  *                   exercise_type:
@@ -134,7 +134,7 @@ router.get('/active', authMiddleware, ticketController.getActiveTickets)
  *             example:
  *               remainingCount: 24
  *               usedCount: 15
- *               pricePerSession: 20000
+ *               amountPerSession: 20000
  *       404:
  *         description: 이용권 없음
  *       500:
@@ -197,7 +197,7 @@ router.delete('/:ticketId', authMiddleware, ticketController.deleteTicket)
  *       - status는 서버에서 자동으로 ENDED로 변경됩니다.
  *       - end_reason은 반드시 입력해야 합니다.
  *       - 이용권 종료는 총 완료/기간만료/환불/기타로 이루어져 있습니다. [COMPLETED, EXPIRED, REFUNDED, ETC]
- *       - REFUNDED일 경우에만 refund_price(환불금액)를 작성합니다.
+ *       - REFUNDED일 경우에만 refund_amount(환불금액)를 작성합니다.
  *     tags: [Ticket]
  *     security:
  *       - bearerAuth: []
@@ -222,7 +222,7 @@ router.delete('/:ticketId', authMiddleware, ticketController.deleteTicket)
  *                 enum: [COMPLETED, EXPIRED, REFUNDED, ETC]
  *                 example: COMPLETED
  *                 description: 종료 사유
- *               refund_price:
+ *               refund_amount:
  *                 type: integer
  *                 nullable: true
  *                 example: 200000
