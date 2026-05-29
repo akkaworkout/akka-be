@@ -1,18 +1,19 @@
-console.log("✅ auth.routes loaded");
+console.log("auth.routes loaded");
 
 const express = require("express");
 const router = express.Router();
 const controller = require("../controllers/auth.controller");
 
-// ✅ 추가: upload middleware 불러오기
+
 const upload = require("../middlewares/upload");
+const refreshTokenMiddleware = require("../middlewares/refreshTokenMiddleware");
 
 /**
  * @swagger
  * /auth/register:
  *   post:
  *     summary: 회원가입
- *     description: 회원가입 성공 시 JWT 토큰을 반환합니다.
+ *     description: 회원가입 성공 시 accessToken과 refreshToken을 반환합니다.
  *     requestBody:
  *       required: true
  *       content:
@@ -48,13 +49,12 @@ const upload = require("../middlewares/upload");
  */
 router.post("/register", upload.single("profile"), controller.register);
 
-
 /**
  * @swagger
  * /auth/login:
  *   post:
  *     summary: 로그인
- *     description: 로그인 성공 시 JWT 토큰을 반환합니다.
+ *     description: 로그인 성공 시 accessToken과 refreshToken을 반환합니다.
  *     requestBody:
  *       required: true
  *       content:
@@ -88,7 +88,9 @@ router.post("/register", upload.single("profile"), controller.register);
  *                 data:
  *                   type: object
  *                   properties:
- *                     token:
+ *                     accessToken:
+ *                       type: string
+ *                     refreshToken:
  *                       type: string
  *       400:
  *         description: 이메일 또는 비밀번호 누락
@@ -98,6 +100,50 @@ router.post("/register", upload.single("profile"), controller.register);
  *         description: 서버 오류
  */
 router.post("/login", controller.login);
+
+/**
+ * @swagger
+ * /auth/refresh:
+ *   post:
+ *     summary: 액세스 토큰 갱신
+ *     description: 리프레시 토큰으로 새로운 액세스 토큰을 발급합니다.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - refreshToken
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *                 example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *     responses:
+ *       200:
+ *         description: 토큰 갱신 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: 토큰 갱신 성공
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     accessToken:
+ *                       type: string
+ *       401:
+ *         description: 유효하지 않은 리프레시 토큰
+ *       500:
+ *         description: 서버 오류
+ */
+router.post("/refresh", refreshTokenMiddleware, controller.refresh); 
 
 /**
  * @swagger
