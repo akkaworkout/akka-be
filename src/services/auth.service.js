@@ -1,6 +1,6 @@
 const db = require("../config/db");
 const { hashPassword, comparePassword } = require("../utils/password");
-const { createToken } = require("../utils/jwt");
+const { createAccessToken, createRefreshToken } = require("../utils/jwt"); // ✅ 둘 다 import
 
 const checkEmail = async (email) => {
   const [rows] = await db.query(
@@ -45,7 +45,7 @@ const register = async ({
 
   const hashed = await hashPassword(password);
 
-  // 목표값까지 같이 저장
+  // 유저 생성
   const [result] = await db.query(
     `
     INSERT INTO users (email, password_hash, nickname, profile_image_url, budget_goal, exercise_goal)
@@ -56,7 +56,11 @@ const register = async ({
 
   const userId = result.insertId;
 
-  return createToken(userId);
+  // accessToken, refreshToken 둘 다 생성해서 반환
+  return {
+    accessToken: createAccessToken(userId),
+    refreshToken: createRefreshToken(userId),
+  };
 };
 
 const login = async (email, password) => {
@@ -69,9 +73,14 @@ const login = async (email, password) => {
 
   const user = rows[0];
   const isMatch = await comparePassword(password, user.password_hash);
+
   if (!isMatch) throw new Error("비밀번호 틀림");
 
-  return createToken(user.id);
+  // accessToken, refreshToken 둘 다 생성해서 반환
+  return {
+    accessToken: createAccessToken(user.id),
+    refreshToken: createRefreshToken(user.id),
+  };
 };
 
 module.exports = {

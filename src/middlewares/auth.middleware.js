@@ -1,5 +1,10 @@
 const jwt = require("jsonwebtoken");
 
+/**
+ * 액세스 토큰 검증 미들웨어
+ * - Authorization: Bearer <accessToken> 형식으로 요청
+ * - 모든 보호된 리소스에 적용
+ */
 const authMiddleware = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
@@ -20,16 +25,17 @@ const authMiddleware = (req, res, next) => {
     });
   }
 
-  const token = parts[1];
+  const accessToken = parts[1]; // ✅수명 명확하게
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
+    // accessToken만 검증 (JWT_SECRET 사용)
+    const decoded = jwt.verify(accessToken, process.env.JWT_SECRET);
+    
     // payload 구조 통일
     req.user = {
       id: decoded.userId,
     };
-
+    
     next();
   } catch (err) {
     return res.status(401).json({
