@@ -25,7 +25,7 @@ const authMiddleware = (req, res, next) => {
     });
   }
 
-  const accessToken = parts[1]; // ✅수명 명확하게
+  const accessToken = parts[1]; //변수명 명확하게
 
   try {
     // accessToken만 검증 (JWT_SECRET 사용)
