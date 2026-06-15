@@ -126,8 +126,78 @@ const getExerciseRecordsByUser = async (user_id) => {
   return rows
 }
 
+const findTicketForUpdate = async (conn, ticket_id) => {
+  const [rows] = await conn.execute(
+    `SELECT * FROM tickets WHERE id = ? FOR UPDATE`,
+    [ticket_id]
+  )
+
+  return rows[0] || null
+}
+
+const createExerciseRecordWithConn = async (
+  conn,
+  data
+) => {
+  const {
+    user_id,
+    exercise_date,
+    success,
+    memo,
+    image_url,
+    cost,
+    ticket_id,
+    color,
+    fail_reason
+  } = data
+
+  const [result] = await conn.execute(
+    `INSERT INTO exercise_records
+    (
+      user_id,
+      exercise_date,
+      is_success,
+      memo,
+      image_url,
+      exercise_amount,
+      ticket_id,
+      color_code,
+      failure_reason
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      user_id,
+      exercise_date,
+      success,
+      memo,
+      image_url,
+      cost,
+      ticket_id,
+      color,
+      fail_reason
+    ]
+  )
+
+  return result
+}
+
+const decreaseRemainingCount = async (
+  conn,
+  ticket_id
+) => {
+  await conn.execute(
+    `UPDATE tickets
+     SET remaining_count = remaining_count - 1
+     WHERE id = ?`,
+    [ticket_id]
+  )
+}
+
 module.exports = {
   createExerciseRecord,
+  createExerciseRecordWithConn,
+  findTicketForUpdate,
+  decreaseRemainingCount,
   findById,
   updateExerciseRecord,
   deleteExerciseRecord,

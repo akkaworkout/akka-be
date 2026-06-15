@@ -1,8 +1,11 @@
 const exerciseModel = require('../models/exerciseRecord.model')
 const db = require('../config/db')
 
-exports.createExerciseRecord = async (data, file, userId) => {
-
+exports.createExerciseRecord = async (
+    data,
+    file,
+    userId
+) => {
     const conn = await db.getConnection()
 
     try {
@@ -17,37 +20,45 @@ exports.createExerciseRecord = async (data, file, userId) => {
         } = data
 
         if (!ticket_id) {
-            throw { status: 400, message: 'ticket_id 필요' }
+            throw new Error('ticket_id 필요')
         }
 
-        const [ticketRows] = await conn.execute(
-            `SELECT * FROM tickets WHERE id = ? FOR UPDATE`,
-            [ticket_id]
-        )
-
-        const ticket = ticketRows[0]
+        const ticket =
+            await exerciseModel.findTicketForUpdate(
+                conn,
+                ticket_id
+            )
 
         if (!ticket) {
-            throw { status: 404, message: '티켓 없음' }
+            throw new Error('티켓 없음')
         }
 
         const successValue =
-            success === 'true' || success === true ? 1 : 0
+            success === 'true' || success === true
+                ? 1
+                : 0
 
         if (successValue === 1 && fail_reason) {
-            throw {
-                status: 400,
-                message: '성공 기록에는 실패 이유를 작성할 수 없습니다'
-            }
+            throw new Error(
+                '성공 기록에는 실패 이유를 작성할 수 없습니다'
+            )
         }
 
-        if (successValue === 1 && ticket.remaining_count <= 0) {
-            throw { status: 400, message: '잔여 횟수 없음' }
+        if (
+            successValue === 1 &&
+            ticket.remaining_count <= 0
+        ) {
+            throw new Error('잔여 횟수 없음')
         }
 
-        const cost = Math.round(ticket.total_amount / ticket.target_count)
-        const color = ticket.color_code
-        const image_url = file ? `/uploads/${file.filename}` : null
+        const cost = Math.round(
+            ticket.total_amount /
+            ticket.target_count
+        )
+
+        const image_url = file
+            ? `/uploads/${file.filename}`
+            : null
 
         const recordData = {
             user_id: userId || 1,
@@ -57,106 +68,122 @@ exports.createExerciseRecord = async (data, file, userId) => {
             image_url,
             cost,
             ticket_id,
-            color,
-            fail_reason: successValue === 0 ? fail_reason || null : null
+            color: ticket.color_code,
+            fail_reason:
+                successValue === 0
+                    ? fail_reason || null
+                    : null
         }
 
-        const [result] = await conn.execute(
-            `INSERT INTO exercise_records
-    (user_id, exercise_date, is_success, memo, image_url, exercise_amount, ticket_id, color_code, failure_reason)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-                recordData.user_id,
-                recordData.exercise_date,
-                recordData.success,
-                recordData.memo,
-                recordData.image_url,
-                recordData.cost,
-                recordData.ticket_id,
-                recordData.color,
-                recordData.fail_reason
-            ]
-        )
+        const result =
+            await exerciseModel.createExerciseRecordWithConn(
+                conn,
+                recordData
+            )
 
         if (successValue === 1) {
-            await conn.execute(
-                `UPDATE tickets
-                 SET remaining_count = remaining_count - 1
-                 WHERE id = ?`,
-                [ticket_id]
+            await exerciseModel.decreaseRemainingCount(
+                conn,
+                ticket_id
             )
         }
 
         await conn.commit()
+
         return result
+
     } catch (err) {
+
         await conn.rollback()
         throw err
+
     } finally {
+
         conn.release()
+
     }
 }
 
-exports.updateExerciseRecord = async (record_id, data) => {
+exports.updateExerciseRecord = async (
+    record_id,
+    data
+) => {
 
-    const record = await exerciseModel.findById(record_id)
+    const record =
+        await exerciseModel.findById(record_id)
 
     if (!record) {
-        throw { status: 404, message: '운동 기록 없음' }
+        throw new Error('운동 기록 없음')
     }
 
     let successValue = record.success
 
     if (data.success !== undefined) {
         successValue =
-            data.success === 'true' || data.success === true ? 1 : 0
+            data.success === 'true' ||
+            data.success === true
+                ? 1
+                : 0
     }
 
     if (successValue === 1 && data.fail_reason) {
-        throw {
-            status: 400,
-            message: '성공 기록에는 실패 이유를 작성할 수 없습니다'
-        }
+        throw new Error(
+            '성공 기록에는 실패 이유를 작성할 수 없습니다'
+        )
     }
 
     const updateData = {
         ...data,
         success: successValue,
-        fail_reason: successValue === 0 ? data.fail_reason || null : null
+        fail_reason:
+            successValue === 0
+                ? data.fail_reason || null
+                : null
     }
 
-    const result = await exerciseModel.updateExerciseRecord(record_id, updateData)
-
-    return result
+    return await exerciseModel.updateExerciseRecord(
+        record_id,
+        updateData
+    )
 }
 
-exports.deleteExerciseRecord = async (record_id) => {
+exports.deleteExerciseRecord = async (
+    record_id
+) => {
 
-    const record = await exerciseModel.findById(record_id)
+    const record =
+        await exerciseModel.findById(record_id)
 
     if (!record) {
-        throw { status: 404, message: '운동 기록 없음' }
+        throw new Error('운동 기록 없음')
     }
 
-    const result = await exerciseModel.deleteExerciseRecord(record_id)
-
-    return result
+    return await exerciseModel.deleteExerciseRecord(
+        record_id
+    )
 }
 
-exports.getExerciseRecord = async (record_id) => {
+exports.getExerciseRecord = async (
+    record_id
+) => {
 
-    const record = await exerciseModel.getExerciseRecordById(record_id)
+    const record =
+        await exerciseModel.getExerciseRecordById(
+            record_id
+        )
 
     if (!record) {
-        throw { status: 404, message: '운동 기록 없음' }
+        throw new Error('운동 기록 없음')
     }
 
     return record
 }
 
-exports.getExerciseRecords = async (userId) => {
+exports.getExerciseRecords = async (
+    userId
+) => {
 
-    const records = await exerciseModel.getExerciseRecordsByUser(userId)
-
-    return records
+    return await exerciseModel.getExerciseRecordsByUser(
+        userId
+    )
 }

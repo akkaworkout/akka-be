@@ -1,35 +1,29 @@
 const exerciseService = require('../services/exerciseRecord.service')
 
-exports.createExerciseRecord = async (req, res) => {
+exports.createExerciseRecord = async (req, res, next) => {
   try {
-
     const result = await exerciseService.createExerciseRecord(
       req.body,
       req.file,
       req.user?.userId
     )
 
-    res.status(201).json({
+    return res.status(201).json({
+      success: true,
       message: '운동 기록 생성 완료',
       record_id: result.insertId
     })
-
   } catch (error) {
-
-    console.error(error)
-
-    res.status(error.status || 500).json({
-      message: error.message || '서버 에러'
-    })
+    next(error)
   }
 }
 
-exports.updateExerciseRecord = async (req, res) => {
+exports.updateExerciseRecord = async (req, res, next) => {
   try {
-
     const record_id = req.params.record_id
 
-    const record = await exerciseService.getExerciseRecord(record_id)
+    const record =
+      await exerciseService.getExerciseRecord(record_id)
 
     const data = {
       ...req.body,
@@ -42,77 +36,75 @@ exports.updateExerciseRecord = async (req, res) => {
       data.image_url = record.image_url
     }
 
-    await exerciseService.updateExerciseRecord(record_id, data)
+    await exerciseService.updateExerciseRecord(
+      record_id,
+      data
+    )
 
-    res.json({
+    return res.status(200).json({
+      success: true,
       message: '운동 기록 수정 완료'
     })
-
   } catch (error) {
-
-    console.error(error)
-
-    res.status(error.status || 500).json({
-      message: error.message || '서버 에러'
-    })
+    next(error)
   }
 }
 
-exports.deleteExerciseRecord = async (req, res) => {
+exports.deleteExerciseRecord = async (req, res, next) => {
   try {
-
     const record_id = req.params.record_id
 
-    await exerciseService.deleteExerciseRecord(record_id)
+    await exerciseService.deleteExerciseRecord(
+      record_id
+    )
 
-    res.json({
+    return res.status(200).json({
+      success: true,
       message: '운동 기록 삭제 완료'
     })
-
   } catch (error) {
-
-    console.error(error)
-
-    res.status(error.status || 500).json({
-      message: error.message || '서버 에러'
-    })
+    next(error)
   }
 }
 
-exports.getExerciseRecord = async (req, res) => {
+exports.getExerciseRecord = async (req, res, next) => {
   try {
-
     const record_id = req.params.record_id
 
-    const record = await exerciseService.getExerciseRecord(record_id)
+    const record =
+      await exerciseService.getExerciseRecord(
+        record_id
+      )
 
-    res.json(record)
-
-  } catch (error) {
-
-    console.error(error)
-
-    res.status(error.status || 500).json({
-      message: error.message || '서버 에러'
+    return res.status(200).json({
+      success: true,
+      data: record
     })
+  } catch (error) {
+    next(error)
   }
 }
 
-exports.getExerciseRecords = async (req, res) => {
+exports.getExerciseRecords = async (req, res, next) => {
   try {
 
-    const userId = req.user?.userId || 1
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "인증이 필요합니다."
+      });
+    } 1
 
-    const records = await exerciseService.getExerciseRecords(userId)
+    const records =
+      await exerciseService.getExerciseRecords(
+        userId
+      )
 
-    res.json(records)
-
-  } catch (error) {
-
-    console.error(error)
-
-    res.status(500).json({
-      message: '서버 에러'
+    return res.status(200).json({
+      success: true,
+      data: records
     })
+  } catch (error) {
+    next(error)
   }
 }

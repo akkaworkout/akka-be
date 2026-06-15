@@ -1,6 +1,6 @@
 const expenseService = require('../services/expense.service');
 
-const createExpense = async (req, res) => {
+const createExpense = async (req, res, next) => {
   try {
     if (!req.user || !req.user.id) {
       return res.status(401).json({
@@ -40,15 +40,11 @@ const createExpense = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Expense 등록 오류:', error);
-    return res.status(500).json({
-      success: false,
-      message: error.message || '서버 오류',
-    });
+    next(error);
   }
 };
 
-const getMonthlyExpenseStats = async (req, res) => {
+const getMonthlyExpenseStats = async (req, res, next) => {
   try {
     if (!req.user || !req.user.id) {
       return res.status(401).json({
@@ -58,19 +54,16 @@ const getMonthlyExpenseStats = async (req, res) => {
     }
 
     const userId = req.user.id;
-    const stats = await expenseService.getThisMonthExpense(userId);
+    const stats =
+      await expenseService.getThisMonthExpense(userId);
 
-    return res.json({
+    return res.status(200).json({
       success: true,
       data: stats,
     });
 
-  } catch (err) {
-    console.error('월별 지출 조회 오류:', err);
-    return res.status(500).json({
-      success: false,
-      message: '서버 오류',
-    });
+  } catch (error) {
+    next(error);
   }
 };
 
