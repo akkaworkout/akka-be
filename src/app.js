@@ -14,35 +14,21 @@ const calendarRoutes = require("./routes/calendar.routes");
 const exerciseRecordRouter = require("./routes/exerciseRecord.routes");
 const reportRoutes = require("./routes/report.routes");
 
+const errorHandler = require("./middlewares/errorHandler");
+
 const app = express();
 
 app.set("trust proxy", 1);
 
 /* CORS */
-const allowedOrigins = [
-  "http://localhost:5173",
-  "http://localhost:5174",
-  "http://localhost:3000",
-  "https://akkaworkout.store"
-];
+const allowedOrigins = require("./config/cors");
 
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-  }
-
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-
-  if (req.method === "OPTIONS") {
-    return res.status(204).end();
-  }
-
-  next();
-});
+app.use(
+  cors({
+    origin: allowedOrigins,
+    credentials: true,
+  })
+);
 
 /* 기본 미들웨어 */
 app.use(express.json());
@@ -94,5 +80,7 @@ app.use("/exercise-record", exerciseRecordRouter);
 
 /* Reports */
 app.use("/reports", reportRoutes);
+
+app.use(errorHandler);
 
 module.exports = app;

@@ -201,11 +201,7 @@ router.patch("/goal", authMiddleware, calendarController.updateMonthlyGoal);
  *       500:
  *         description: 서버 내부 오류
  */
-router.get(
-    "/summary",
-    authMiddleware,
-    calendarController.getMonthlySummary
-);
+router.get("/summary", authMiddleware, calendarController.getMonthlySummary);
 
 /**
  * @swagger

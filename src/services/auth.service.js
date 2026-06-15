@@ -1,21 +1,17 @@
-const db = require("../config/db");
+const authModel = require("../models/auth.model");
 const { hashPassword, comparePassword } = require("../utils/password");
-const { createAccessToken, createRefreshToken } = require("../utils/jwt"); // ✅ 둘 다 import
+const { createAccessToken, createRefreshToken } = require("../utils/jwt");
 
 const checkEmail = async (email) => {
-  const [rows] = await db.query(
-    "SELECT 1 FROM users WHERE email = ? LIMIT 1",
-    [email]
-  );
-  return rows.length === 0;
+  const user = await authModel.findByEmail(email);
+
+  return !user;
 };
 
 const checkNickname = async (nickname) => {
-  const [rows] = await db.query(
-    "SELECT 1 FROM users WHERE nickname = ? LIMIT 1",
-    [nickname]
-  );
-  return rows.length === 0;
+  const user = await authModel.findByNickname(nickname);
+
+  return !user;
 };
 
 const register = async ({
@@ -27,36 +23,35 @@ const register = async ({
   profile = null,
 }) => {
   if (!email || !password || !nickname) {
-    throw new Error("email, password_hash, nickname are required");
+    throw new Error(
+      "email, password_hash, nickname are required"
+    );
   }
 
-  // 중복 체크
-  const [emailRows] = await db.query(
-    "SELECT 1 FROM users WHERE email = ? LIMIT 1",
-    [email]
-  );
-  if (emailRows.length > 0) throw new Error("이미 존재하는 이메일");
+  const emailUser = await authModel.findByEmail(email);
 
-  const [nickRows] = await db.query(
-    "SELECT 1 FROM users WHERE nickname = ? LIMIT 1",
-    [nickname]
-  );
-  if (nickRows.length > 0) throw new Error("이미 존재하는 닉네임");
+  if (emailUser) {
+    throw new Error("이미 존재하는 이메일");
+  }
+
+  const nicknameUser =
+    await authModel.findByNickname(nickname);
+
+  if (nicknameUser) {
+    throw new Error("이미 존재하는 닉네임");
+  }
 
   const hashed = await hashPassword(password);
 
-  // 유저 생성
-  const [result] = await db.query(
-    `
-    INSERT INTO users (email, password_hash, nickname, profile_image_url, budget_goal, exercise_goal)
-    VALUES (?, ?, ?, ?, ?, ?)
-    `,
-    [email, hashed, nickname, profile, target_budget, target_exercise_count]
-  );
+  const userId = await authModel.createUser({
+    email,
+    passwordHash: hashed,
+    nickname,
+    profile,
+    target_budget,
+    target_exercise_count,
+  });
 
-  const userId = result.insertId;
-
-  // accessToken, refreshToken 둘 다 생성해서 반환
   return {
     accessToken: createAccessToken(userId),
     refreshToken: createRefreshToken(userId),
@@ -64,19 +59,21 @@ const register = async ({
 };
 
 const login = async (email, password) => {
-  const [rows] = await db.query(
-    "SELECT id, password_hash FROM users WHERE email = ? LIMIT 1",
-    [email]
+  const user = await authModel.findByEmail(email);
+
+  if (!user) {
+    throw new Error("유저 없음");
+  }
+
+  const isMatch = await comparePassword(
+    password,
+    user.password_hash
   );
 
-  if (rows.length === 0) throw new Error("유저 없음");
+  if (!isMatch) {
+    throw new Error("비밀번호 틀림");
+  }
 
-  const user = rows[0];
-  const isMatch = await comparePassword(password, user.password_hash);
-
-  if (!isMatch) throw new Error("비밀번호 틀림");
-
-  // accessToken, refreshToken 둘 다 생성해서 반환
   return {
     accessToken: createAccessToken(user.id),
     refreshToken: createRefreshToken(user.id),
