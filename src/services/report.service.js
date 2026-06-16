@@ -1,4 +1,4 @@
-const db = require("../config/db");
+const reportModel = require("../models/report.model");
 
 // 월 시작/끝 범위
 const getMonthRange = (year, month) => {
@@ -7,69 +7,51 @@ const getMonthRange = (year, month) => {
   return { start, end };
 };
 
-// MySQL DAYOFWEEK: 1=일 ... 7=토
-// 우리가 원하는 배열: 월(0)~일(6)
-const DOW_EXPR = (col) => `((DAYOFWEEK(${col}) + 5) % 7)`;
-
+/**
+ * 월별 리포트 조회
+ * - reportModel에서 필요한 데이터 가져오기
+ * - 비즈니스 로직(가공)만 담당
+ */
 const getMonthlyReport = async ({ userId, year, month, exerciseType }) => {
   const { start, end } = getMonthRange(year, month);
 
-  const EXERCISE_DATE_COL = "er.exercise_date";
-  const EXPENSE_DATE_COL = "e.expense_date";
-  const TICKET_DATE_COL = "t.created_at";
-
-  // ---------------------------
+  // ===========================
   // 1) KPI
-  // ---------------------------
-  const [kpiRows] = await db.query(
-    `
-    SELECT
-      SUM(CASE WHEN er.is_success = 1 THEN 1 ELSE 0 END) AS totalExerciseCount,
-      SUM(CASE WHEN er.is_success = 0 THEN 1 ELSE 0 END) AS noShowCount,
-      COALESCE(SUM(CASE WHEN er.is_success = 0 THEN er.exercise_amount ELSE 0 END), 0) AS noshowLossAmount
-    FROM exercise_records er
-    WHERE er.user_id = ?
-      AND ${EXERCISE_DATE_COL} >= ?
-      AND ${EXERCISE_DATE_COL} < ?
-    `,
-    [userId, start, end]
-  );
+  // ===========================
+  const totalExerciseCount = await reportModel.getTotalExerciseCount({
+    userId,
+    startDate: start,
+    endDate: end,
+  });
+
+  const noShowCount = await reportModel.getNoShowCount({
+    userId,
+    startDate: start,
+    endDate: end,
+  });
+
+  const noshowLossAmount = await reportModel.getNoShowLossAmount({
+    userId,
+    startDate: start,
+    endDate: end,
+  });
+
+  const totalExpenseAmount = await reportModel.getTotalExpenseAmount({
+    userId,
+    startDate: start,
+    endDate: end,
+  });
 
   const kpi = {
-    totalExerciseCount: Number(kpiRows?.[0]?.totalExerciseCount ?? 0),
-    noShowCount: Number(kpiRows?.[0]?.noShowCount ?? 0),
-    noshowLossAmount: Number(kpiRows?.[0]?.noshowLossAmount ?? 0),
-    totalExpenseAmount: 0,
+    totalExerciseCount,
+    noShowCount,
+    noshowLossAmount,
+    totalExpenseAmount,
   };
 
-  const [[ticketSumRow]] = await db.query(
-    `
-    SELECT COALESCE(SUM(t.total_amount), 0) AS ticketSum
-    FROM tickets t
-    WHERE t.user_id = ?
-      AND ${TICKET_DATE_COL} >= ?
-      AND ${TICKET_DATE_COL} < ?
-    `,
-    [userId, start, end]
-  );
-
-  const [[expenseSumRow]] = await db.query(
-    `
-    SELECT COALESCE(SUM(e.amount), 0) AS expenseSum
-    FROM expenses e
-    WHERE e.user_id = ?
-      AND ${EXPENSE_DATE_COL} >= ?
-      AND ${EXPENSE_DATE_COL} < ?
-    `,
-    [userId, start, end]
-  );
-
-  kpi.totalExpenseAmount =
-    Number(ticketSumRow?.ticketSum ?? 0) + Number(expenseSumRow?.expenseSum ?? 0);
-
-  // ---------------------------
+  // ===========================
   // 2) Goal
-  // ---------------------------
+  // ===========================
   let goal = {
     exerciseType: exerciseType || "",
     targetCount: 0,
@@ -79,32 +61,19 @@ const getMonthlyReport = async ({ userId, year, month, exerciseType }) => {
   };
 
   if (exerciseType) {
-    const [[targetRow]] = await db.query(
-      `
-      SELECT COALESCE(SUM(t.target_count), 0) AS targetCount
-      FROM tickets t
-      WHERE t.user_id = ?
-        AND t.exercise_type = ?
-      `,
-      [userId, exerciseType]
-    );
+    const targetCount = await reportModel.getTargetCountByExerciseType({
+      userId,
+      exerciseType,
+      startDate: start,
+      endDate: end,
+    });
 
-    const [[successRow]] = await db.query(
-      `
-      SELECT COUNT(*) AS successCount
-      FROM exercise_records er
-      JOIN tickets t ON t.id = er.ticket_id
-      WHERE er.user_id = ?
-        AND er.is_success = 1
-        AND ${EXERCISE_DATE_COL} >= ?
-        AND ${EXERCISE_DATE_COL} < ?
-        AND t.exercise_type = ?
-      `,
-      [userId, start, end, exerciseType]
-    );
-
-    const targetCount = Number(targetRow?.targetCount ?? 0);
-    const successCount = Number(successRow?.successCount ?? 0);
+    const successCount = await reportModel.getSuccessCountByExerciseType({
+      userId,
+      exerciseType,
+      startDate: start,
+      endDate: end,
+    });
 
     goal = {
       exerciseType,
@@ -116,153 +85,60 @@ const getMonthlyReport = async ({ userId, year, month, exerciseType }) => {
     };
   }
 
-  // ---------------------------
+  // ===========================
   // 3) Charts
-  // ---------------------------
-  const exerciseByDow = Array(7).fill(0);
-  const expenseByDow = Array(7).fill(0);
-
-  const [exRows] = await db.query(
-    `
-    SELECT ${DOW_EXPR(EXERCISE_DATE_COL)} AS dow, COUNT(*) AS cnt
-    FROM exercise_records er
-    WHERE er.user_id = ?
-      AND er.is_success = 1
-      AND ${EXERCISE_DATE_COL} >= ?
-      AND ${EXERCISE_DATE_COL} < ?
-    GROUP BY dow
-    `,
-    [userId, start, end]
-  );
-
-  exRows.forEach((r) => {
-    const dow = Number(r.dow);
-    const cnt = Number(r.cnt) || 0;
-    if (dow >= 0 && dow <= 6) exerciseByDow[dow] = cnt;
+  // ===========================
+  const exerciseByDow = await reportModel.getExerciseByDayOfWeek({
+    userId,
+    startDate: start,
+    endDate: end,
   });
 
-  const [expRows] = await db.query(
-    `
-    SELECT ${DOW_EXPR(EXPENSE_DATE_COL)} AS dow, COALESCE(SUM(e.amount), 0) AS sum_amount
-    FROM expenses e
-    WHERE e.user_id = ?
-      AND ${EXPENSE_DATE_COL} >= ?
-      AND ${EXPENSE_DATE_COL} < ?
-    GROUP BY dow
-    `,
-    [userId, start, end]
-  );
-
-  expRows.forEach((r) => {
-    const dow = Number(r.dow);
-    const sum = Number(r.sum_amount) || 0;
-    if (dow >= 0 && dow <= 6) expenseByDow[dow] = sum;
+  const expenseByDow = await reportModel.getExpenseByDayOfWeek({
+    userId,
+    startDate: start,
+    endDate: end,
   });
 
   const charts = { exerciseByDow, expenseByDow };
 
-  // ---------------------------
+  // ===========================
   // 4) Breakdown
-  // ---------------------------
-  const [exerciseRows] = await db.query(
-    `
-    SELECT t.exercise_type AS label, COUNT(*) AS count
-    FROM exercise_records er
-    JOIN tickets t ON t.id = er.ticket_id
-    WHERE er.user_id = ?
-      AND er.is_success = 1
-      AND ${EXERCISE_DATE_COL} >= ?
-      AND ${EXERCISE_DATE_COL} < ?
-    GROUP BY t.exercise_type
-    ORDER BY count DESC
-    `,
-    [userId, start, end]
-  );
+  // ===========================
+  const exerciseBreakdown = await reportModel.getExerciseBreakdown({
+    userId,
+    startDate: start,
+    endDate: end,
+  });
 
-  const [noshowRows] = await db.query(
-    `
-    SELECT t.exercise_type AS label, COUNT(*) AS count
-    FROM exercise_records er
-    JOIN tickets t ON t.id = er.ticket_id
-    WHERE er.user_id = ?
-      AND er.is_success = 0
-      AND ${EXERCISE_DATE_COL} >= ?
-      AND ${EXERCISE_DATE_COL} < ?
-    GROUP BY t.exercise_type
-    ORDER BY count DESC
-    `,
-    [userId, start, end]
-  );
+  const noShowBreakdown = await reportModel.getNoShowBreakdown({
+    userId,
+    startDate: start,
+    endDate: end,
+  });
 
-  // 실패 메모 데이터
-  const [memoRowsRaw] = await db.query(
-    `
-    SELECT 
-      DATE_FORMAT(er.exercise_date,'%m/%d') AS date,
-      t.exercise_type AS category,
-      er.failure_reason AS reason
-    FROM exercise_records er
-    JOIN tickets t ON t.id = er.ticket_id
-    WHERE er.user_id = ?
-      AND er.is_success = 0
-      AND er.failure_reason IS NOT NULL
-      AND DATE(er.exercise_date) >= DATE(?)
-      AND DATE(er.exercise_date) < DATE(?)
-    ORDER BY er.exercise_date DESC
-    `,
-    [userId, start, end]
-  );
+  const failMemos = await reportModel.getFailureMemos({
+    userId,
+    startDate: start,
+    endDate: end,
+  });
 
-  const memoRows = memoRowsRaw || [];
-
-  const [expenseRows] = await db.query(
-    `
-    SELECT label, SUM(amount) AS amount
-    FROM (
-      SELECT 
-        '운동비' AS label,
-        SUM(t.total_amount) AS amount
-      FROM tickets t
-      WHERE t.user_id = ?
-        AND ${TICKET_DATE_COL} >= ?
-        AND ${TICKET_DATE_COL} < ?
-
-      UNION ALL
-
-      SELECT 
-        e.category AS label,
-        SUM(e.amount) AS amount
-      FROM expenses e
-      WHERE e.user_id = ?
-        AND ${EXPENSE_DATE_COL} >= ?
-        AND ${EXPENSE_DATE_COL} < ?
-      GROUP BY e.category
-    ) AS combined
-    GROUP BY label
-    ORDER BY amount DESC
-    `,
-    [userId, start, end, userId, start, end]
-  );
+  const expenseBreakdown = await reportModel.getExpenseBreakdown({
+    userId,
+    startDate: start,
+    endDate: end,
+  });
 
   const breakdown = {
-    exercise: exerciseRows.map((r) => ({
-      label: r.label,
-      count: Number(r.count),
-    })),
-    noshow: noshowRows.map((r) => ({
-      label: r.label,
-      count: Number(r.count),
-    })),
-    expense: expenseRows.map((r) => ({
-      label: r.label,
-      amount: Number(r.amount),
-    })),
-    failMemo: memoRows,
+    exercise: exerciseBreakdown,
+    noshow: noShowBreakdown,
+    expense: expenseBreakdown,
+    failMemo: failMemos,
   };
 
-  // ---------------------------
-  // 5) Summary
-  // ---------------------------
+  // ===========================
+  // 5) Summary (비어있음)
+  // ===========================
   const summary = {};
 
   console.log("SERVICE RESULT", {
@@ -273,8 +149,6 @@ const getMonthlyReport = async ({ userId, year, month, exerciseType }) => {
     breakdown,
     summary,
   });
-
-
 
   return {
     period: { year, month },
