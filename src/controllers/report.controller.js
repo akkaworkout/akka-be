@@ -5,6 +5,7 @@ const getMonthlyReport = async (req, res) => {
   try {
     const { year, month, exerciseType } = req.query;
 
+    // 1) 입력값 검증
     if (!year || !month) {
       return res.status(400).json({
         success: false,
@@ -12,6 +13,7 @@ const getMonthlyReport = async (req, res) => {
       });
     }
 
+    // 2) 사용자 인증 확인
     const userId = req.user?.id;
     if (!userId) {
       return res.status(401).json({
@@ -20,6 +22,7 @@ const getMonthlyReport = async (req, res) => {
       });
     }
 
+    // 3) 서비스 호출
     const data = await reportService.getMonthlyReport({
       userId,
       year: Number(year),
@@ -27,6 +30,7 @@ const getMonthlyReport = async (req, res) => {
       exerciseType: exerciseType ? String(exerciseType) : null,
     });
 
+    // 4) 응답
     return res.status(200).json({
       success: true,
       message: "월간 리포트 조회 성공",
