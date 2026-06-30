@@ -8,7 +8,7 @@ const toKSTDate = (date) => {
 // 월 전체 기록 조회 (달력 표시용)
 const getMonthlyRecords = async (userId, year, month) => {
   if (!userId || !year || !month) {
-    throw new Error("userId, year and month are required");
+    throw new Error("필수 입력값이 누락되었습니다.");
   }
 
   const rows = await calendarModel.findMonthlyRecords(
@@ -20,7 +20,7 @@ const getMonthlyRecords = async (userId, year, month) => {
   return rows.map((row) => ({
     date: toKSTDate(new Date(row.date)),
     name: row.name,
-    color: row.color,
+    color: row.color_code,
     type: row.type,
   }));
 };
@@ -28,12 +28,12 @@ const getMonthlyRecords = async (userId, year, month) => {
 // 특정 날짜의 운동 + 지출 + 이용권 기록 조회
 const getByDate = async (userId, date) => {
   if (!userId || !date) {
-    throw new Error("userId and date are required");
+    throw new Error("필수 입력값이 누락되었습니다.");
   }
 
   const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
   if (!dateRegex.test(date)) {
-    throw new Error("Invalid date format (YYYY-MM-DD required)");
+    throw new Error("날짜 형식이 올바르지 않습니다. (YYYY-MM-DD)");
   }
 
   const start = new Date(`${date}T00:00:00+09:00`);
@@ -101,7 +101,7 @@ const getByDate = async (userId, date) => {
 // 월 요약 정보 조회 (지출, 실패금액, 운동횟수)
 const getMonthlySummary = async (userId, year, month) => {
   if (!userId || !year || !month) {
-    throw new Error("userId, year and month are required");
+    throw new Error("필수 입력값이 누락되었습니다.");
   }
 
   const parsedYear = Number(year);
@@ -113,7 +113,7 @@ const getMonthlySummary = async (userId, year, month) => {
     parsedMonth < 1 ||
     parsedMonth > 12
   ) {
-    throw new Error("Invalid year or month format");
+    throw new Error("연도 또는 월 형식이 올바르지 않습니다.");
   }
 
   const totalAmount = await calendarModel.findMonthlyTotalAmount(
@@ -149,7 +149,7 @@ const getMonthlySummary = async (userId, year, month) => {
 // 월 목표 조회
 const getMonthlyGoal = async (userId, year, month) => {
   if (!userId || !year || !month) {
-    throw new Error("userId, year and month are required");
+    throw new Error("필수 입력값이 누락되었습니다.");
   }
 
   const yearMonth = `${year}-${String(month).padStart(2, "0")}`;
@@ -162,7 +162,7 @@ const getMonthlyGoal = async (userId, year, month) => {
 // 월 목표 수정
 const updateMonthlyGoal = async (userId, year, month, goals) => {
   if (!userId || !year || !month || !Array.isArray(goals)) {
-    throw new Error("Invalid input for updating monthly goal");
+    throw new Error("요청 형식이 올바르지 않습니다.");
   }
 
   const yearMonth = `${year}-${String(month).padStart(2, "0")}`;

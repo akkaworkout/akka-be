@@ -20,7 +20,7 @@ const createTicket = async (userId, body) => {
         !start_date ||
         !end_date
     ) {
-        throw new Error('필수 값 누락')
+        throw new Error("필수 입력값이 누락되었습니다.");
     }
 
     const ticketData = {
@@ -67,8 +67,8 @@ const getActiveTickets = async (userId) => {
 const getTicketDetail = async (userId, ticketId) => {
     const ticket = await ticketModel.findById(ticketId)
 
-    if (!ticket) throw new Error('티켓 없음')
-    if (ticket.user_id !== userId) throw new Error('권한 없음')
+    if (!ticket) throw new Error("존재하지 않는 이용권입니다.");
+    if (ticket.user_id !== userId) throw new Error("존재하지 않는 이용권입니다.");
 
     return ticket
 }
@@ -76,8 +76,8 @@ const getTicketDetail = async (userId, ticketId) => {
 const deleteTicket = async (userId, ticketId) => {
     const ticket = await ticketModel.findById(ticketId)
 
-    if (!ticket) throw new Error('티켓 없음')
-    if (ticket.user_id !== userId) throw new Error('권한 없음')
+    if (!ticket) throw new Error("존재하지 않는 이용권입니다.");
+    if (ticket.user_id !== userId) throw new Error("접근 권한이 없습니다.");
 
     await ticketModel.deleteTicket(ticketId)
 }
@@ -85,20 +85,20 @@ const deleteTicket = async (userId, ticketId) => {
 const endTicket = async (userId, ticketId, endReason, refundAmount) => {
     const ticket = await ticketModel.findById(ticketId)
 
-    if (!ticket) throw new Error('티켓 없음')
-    if (ticket.user_id !== userId) throw new Error('권한 없음')
+    if (!ticket) throw new Error("존재하지 않는 이용권입니다.");
+    if (ticket.user_id !== userId) throw new Error("접근 권한이 없습니다.");
 
     if (ticket.status !== 'ACTIVE') {
-        throw new Error('이미 종료된 이용권')
+        throw new Error("이미 종료된 이용권입니다.");
     }
 
-    if (!endReason) throw new Error('종료 사유 필요')
+    if (!endReason) throw new Error("종료 사유를 입력해주세요.");
 
     let forfeitedAmount  = 0
 
     if (endReason === 'REFUNDED') {
         if (!refundAmount || refundAmount <= 0) {
-            throw new Error('환불 금액 필요')
+            throw new Error("환불 금액을 입력해주세요.");
         }
     } else if (endReason === 'EXPIRED') {
         forfeitedAmount = (ticket.total_amount / ticket.target_count) * ticket.remaining_count
