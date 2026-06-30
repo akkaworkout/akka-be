@@ -2,6 +2,7 @@ const express = require('express')
 const router = express.Router()
 const controller = require('../controllers/exerciseRecord.controller')
 const upload = require('../middlewares/upload')
+const authMiddleware = require('../middlewares/auth.middleware')
 
 /**
  * @swagger
@@ -35,7 +36,7 @@ const upload = require('../middlewares/upload')
  *       500:
  *         description: 서버 에러
  */
-router.get('/', controller.getExerciseRecords)
+router.get('/', authMiddleware, controller.getExerciseRecords)
 
 
 /**
@@ -58,10 +59,18 @@ router.get('/', controller.getExerciseRecords)
  *         content:
  *           application/json:
  *             example:
- *               record_id: 12
- *               exercise_date: 2026-03-09
- *               success: 1
- *               memo: 발레 성공
+ *              success: true
+ *              data:
+ *               - id: 12
+ *                 exercise_date: 2026-03-09
+ *                 is_success: 1
+ *                 memo: 발레 성공
+ *                 image_url: /uploads/example.png
+ *                 exercise_amount: 20000
+ *                 ticket_id: 1
+ *                 color_code: "#FFE6CC"
+ *                 failure_reason: null\
+ *                 exercise_type: 발레
  *       404:
  *         description: 운동 기록 없음
  *       500:

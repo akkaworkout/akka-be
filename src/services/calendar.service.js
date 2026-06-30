@@ -20,7 +20,7 @@ const getMonthlyRecords = async (userId, year, month) => {
   return rows.map((row) => ({
     date: toKSTDate(new Date(row.date)),
     name: row.name,
-    color: row.color_code,
+    color_code: row.color_code,
     type: row.type,
   }));
 };
@@ -51,9 +51,9 @@ const getByDate = async (userId, date) => {
     id: row.id,
     exercise_type: row.exercise_type,
     success: row.success,
-    cost: row.cost,
+    exercise_amount: row.exercise_amount,
     memo: row.memo,
-    color: row.color_code,
+    color_code: row.color_code,
     image_url: row.image_url,
     date: toKSTDate(new Date(row.created_at)),
     created_at: row.created_at,
@@ -69,9 +69,9 @@ const getByDate = async (userId, date) => {
     type: "expense",
     id: row.id,
     category: row.category,
-    title: row.title,
+    item_name: row.item_name,
     amount: row.amount,
-    color: row.color_code,
+    color_code: row.color_code,
     date: toKSTDate(new Date(row.expense_date)),
     expense_date: row.expense_date,
   }));

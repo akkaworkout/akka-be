@@ -94,9 +94,9 @@ const updateMe = async (req, res) => {
     }
 
     if (nickname !== undefined) updatedData.nickname = nickname;
-    if (target_budget !== undefined) updatedData.target_budget = target_budget;
+    if (target_budget !== undefined) updatedData.budget_goal = target_budget;
     if (target_exercise_count !== undefined)
-      updatedData.target_exercise_count = target_exercise_count;
+      updatedData.exercise_goal = target_exercise_count;
 
     // 프로필 이미지
     const profilePath = req.file ? `/uploads/${req.file.filename}` : undefined;

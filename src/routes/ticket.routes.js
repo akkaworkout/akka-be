@@ -27,7 +27,10 @@ const authMiddleware = require('../middlewares/auth.middleware')
  *             required:
  *               - exercise_type
  *               - ticket_type
+ *               - target_count
  *               - total_amount
+ *               - start_date
+ *               - end_date     
  *             properties:
  *               exercise_type:
  *                 type: string
@@ -92,26 +95,31 @@ router.get('/', authMiddleware, ticketController.getMyTickets)
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   ticket_id:
- *                     type: integer
- *                     example: 3
- *                   color_code:
- *                     type: string
- *                     example: "#FFE6CC"
- *                   exercise_type:
- *                     type: string
- *                     example: 발레
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                         example: 3
+ *                       color_code:
+ *                         type: string
+ *                         example: "#FFE6CC"
+ *                       exercise_type:
+ *                         type: string
+ *                         example: 발레
  *       401:
  *         description: 인증 실패 (토큰 없음 또는 만료)
  *       500:
  *         description: 서버 내부 오류
  */
 router.get('/active', authMiddleware, ticketController.getActiveTickets)
-
 /**
  * @swagger
  * /tickets/{ticketId}/summary:
@@ -132,6 +140,8 @@ router.get('/active', authMiddleware, ticketController.getActiveTickets)
  *         content:
  *           application/json:
  *             example:
+ *              success: true
+ *              data:
  *               remainingCount: 24
  *               usedCount: 15
  *               amountPerSession: 20000
