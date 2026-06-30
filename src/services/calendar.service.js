@@ -50,7 +50,7 @@ const getByDate = async (userId, date) => {
     type: "exercise",
     id: row.id,
     exercise_type: row.exercise_type,
-    success: row.success,
+    success: row.is_success,
     exercise_amount: row.exercise_amount,
     memo: row.memo,
     color_code: row.color_code,
