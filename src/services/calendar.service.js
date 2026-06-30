@@ -53,7 +53,7 @@ const getByDate = async (userId, date) => {
     success: row.success,
     cost: row.cost,
     memo: row.memo,
-    color: row.color,
+    color: row.color_code,
     image_url: row.image_url,
     date: toKSTDate(new Date(row.created_at)),
     created_at: row.created_at,
@@ -71,7 +71,7 @@ const getByDate = async (userId, date) => {
     category: row.category,
     title: row.title,
     amount: row.amount,
-    color: row.color,
+    color: row.color_code,
     date: toKSTDate(new Date(row.expense_date)),
     expense_date: row.expense_date,
   }));
@@ -85,7 +85,7 @@ const getByDate = async (userId, date) => {
     type: "ticket",
     id: row.id,
     exercise_type: row.exercise_type,
-    color: row.color,
+    color: row.color_code,
     date: toKSTDate(new Date(row.created_at)),
     created_at: row.created_at,
   }));
