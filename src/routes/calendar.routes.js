@@ -8,7 +8,7 @@ const authMiddleware = require("../middlewares/auth.middleware");
  * /calendar:
  *   get:
  *     summary: 월 전체 운동 기록 조회 (달력용)
- *     description: 해당 연/월에 포함된 운동 기록을 반환합니다. 날짜별로 name(exercise_type 또는 title)과 color 정보를 제공합니다.
+ *     description: 해당 연/월에 포함된 운동 기록을 반환합니다. 날짜별로 name(exercise_type 또는 item_name)과 color_code 정보를 제공합니다.
  *     tags:
  *       - Calendar
  *     security:
@@ -50,7 +50,7 @@ const authMiddleware = require("../middlewares/auth.middleware");
  *                       name:
  *                         type: string
  *                         example: 발레
- *                       color:
+ *                       color_code:
  *                         type: string
  *                         example: "#FFE6CC"
  *       400:

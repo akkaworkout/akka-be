@@ -39,7 +39,7 @@ router.get("/me", authMiddleware, userController.getMe);
  *     requestBody:
  *       required: false
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             properties:
