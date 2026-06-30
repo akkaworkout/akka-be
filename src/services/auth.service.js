@@ -23,22 +23,20 @@ const register = async ({
   profile = null,
 }) => {
   if (!email || !password || !nickname) {
-    throw new Error(
-      "email, password_hash, nickname are required"
-    );
+    throw new Error("필수 입력값이 누락되었습니다.");
   }
 
   const emailUser = await authModel.findByEmail(email);
 
   if (emailUser) {
-    throw new Error("이미 존재하는 이메일");
+    throw new Error("이미 사용 중인 이메일입니다.");
   }
 
   const nicknameUser =
     await authModel.findByNickname(nickname);
 
   if (nicknameUser) {
-    throw new Error("이미 존재하는 닉네임");
+    throw new Error("이미 사용 중인 닉네임입니다.");
   }
 
   const hashed = await hashPassword(password);
@@ -62,7 +60,7 @@ const login = async (email, password) => {
   const user = await authModel.findByEmail(email);
 
   if (!user) {
-    throw new Error("유저 없음");
+    throw new Error("존재하지 않는 이메일입니다.");
   }
 
   const isMatch = await comparePassword(
@@ -71,7 +69,7 @@ const login = async (email, password) => {
   );
 
   if (!isMatch) {
-    throw new Error("비밀번호 틀림");
+    throw new Error("비밀번호가 일치하지 않습니다.");
   }
 
   return {

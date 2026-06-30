@@ -1,11 +1,7 @@
 const exerciseModel = require('../models/exerciseRecord.model')
 const db = require('../config/db')
 
-exports.createExerciseRecord = async (
-    data,
-    file,
-    userId
-) => {
+exports.createExerciseRecord = async (data, file, userId) => {
     const conn = await db.getConnection()
 
     try {
@@ -20,7 +16,7 @@ exports.createExerciseRecord = async (
         } = data
 
         if (!ticket_id) {
-            throw new Error('ticket_id 필요')
+            throw new Error("이용권을 선택해주세요.");
         }
 
         const ticket =
@@ -30,7 +26,7 @@ exports.createExerciseRecord = async (
             )
 
         if (!ticket) {
-            throw new Error('티켓 없음')
+            throw new Error("존재하지 않는 이용권입니다.");
         }
 
         const successValue =
@@ -39,16 +35,14 @@ exports.createExerciseRecord = async (
                 : 0
 
         if (successValue === 1 && fail_reason) {
-            throw new Error(
-                '성공 기록에는 실패 이유를 작성할 수 없습니다'
-            )
+            throw new Error("성공 기록에는 실패 이유를 입력할 수 없습니다.");
         }
 
         if (
             successValue === 1 &&
             ticket.remaining_count <= 0
         ) {
-            throw new Error('잔여 횟수 없음')
+            throw new Error("잔여 이용 횟수가 없습니다.");
         }
 
         const cost = Math.round(
@@ -93,27 +87,21 @@ exports.createExerciseRecord = async (
         return result
 
     } catch (err) {
-
         await conn.rollback()
         throw err
-
+        
     } finally {
-
         conn.release()
-
     }
 }
 
-exports.updateExerciseRecord = async (
-    record_id,
-    data
-) => {
+exports.updateExerciseRecord = async (record_id, data) => {
 
     const record =
         await exerciseModel.findById(record_id)
 
     if (!record) {
-        throw new Error('운동 기록 없음')
+        throw new Error("존재하지 않는 운동 기록입니다.");
     }
 
     let successValue = record.success
@@ -121,15 +109,13 @@ exports.updateExerciseRecord = async (
     if (data.success !== undefined) {
         successValue =
             data.success === 'true' ||
-            data.success === true
+                data.success === true
                 ? 1
                 : 0
     }
 
     if (successValue === 1 && data.fail_reason) {
-        throw new Error(
-            '성공 기록에는 실패 이유를 작성할 수 없습니다'
-        )
+        throw new Error("성공 기록에는 실패 이유를 입력할 수 없습니다.");
     }
 
     const updateData = {
@@ -147,15 +133,13 @@ exports.updateExerciseRecord = async (
     )
 }
 
-exports.deleteExerciseRecord = async (
-    record_id
-) => {
+exports.deleteExerciseRecord = async (record_id) => {
 
     const record =
         await exerciseModel.findById(record_id)
 
     if (!record) {
-        throw new Error('운동 기록 없음')
+        throw new Error("존재하지 않는 운동 기록입니다.");
     }
 
     return await exerciseModel.deleteExerciseRecord(
@@ -163,9 +147,7 @@ exports.deleteExerciseRecord = async (
     )
 }
 
-exports.getExerciseRecord = async (
-    record_id
-) => {
+exports.getExerciseRecord = async (record_id) => {
 
     const record =
         await exerciseModel.getExerciseRecordById(
@@ -173,17 +155,12 @@ exports.getExerciseRecord = async (
         )
 
     if (!record) {
-        throw new Error('운동 기록 없음')
+        throw new Error("존재하지 않는 운동 기록입니다.");
     }
 
     return record
 }
 
-exports.getExerciseRecords = async (
-    userId
-) => {
-
-    return await exerciseModel.getExerciseRecordsByUser(
-        userId
-    )
+exports.getExerciseRecords = async (userId) => {
+    return await exerciseModel.getExerciseRecordsByUser(userId)
 }
