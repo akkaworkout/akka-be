@@ -4,6 +4,7 @@ const reportModel = require("../models/report.model");
 const getMonthRange = (year, month) => {
   const start = new Date(year, month - 1, 1);
   const end = new Date(year, month, 1);
+
   return { start, end };
 };
 
@@ -13,7 +14,23 @@ const getMonthRange = (year, month) => {
  * - 비즈니스 로직(가공)만 담당
  */
 const getMonthlyReport = async ({ userId, year, month, exerciseType }) => {
-  const { start, end } = getMonthRange(year, month);
+  if (!userId || !year || !month) {
+    throw new Error("필수 입력값이 누락되었습니다.");
+  }
+
+  const parsedYear = Number(year);
+  const parsedMonth = Number(month);
+
+  if (
+    Number.isNaN(parsedYear) ||
+    Number.isNaN(parsedMonth) ||
+    parsedMonth < 1 ||
+    parsedMonth > 12
+  ) {
+    throw new Error("연도 또는 월 형식이 올바르지 않습니다.");
+  }
+
+  const { start, end } = getMonthRange(parsedYear, parsedMonth);
 
   // ===========================
   // 1) KPI
@@ -142,7 +159,7 @@ const getMonthlyReport = async ({ userId, year, month, exerciseType }) => {
   const summary = {};
 
   console.log("SERVICE RESULT", {
-    period: { year, month },
+    period: { year: parsedYear, month: parsedMonth },
     kpi,
     goal,
     charts,
@@ -151,7 +168,7 @@ const getMonthlyReport = async ({ userId, year, month, exerciseType }) => {
   });
 
   return {
-    period: { year, month },
+    period: { year: parsedYear, month: parsedMonth },
     kpi,
     goal,
     charts,
