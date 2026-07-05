@@ -10,9 +10,11 @@ const getTotalExerciseCount = async ({ userId, startDate, endDate }) => {
      FROM exercise_records
      WHERE user_id = ?
        AND is_success = 1
-       AND exercise_date BETWEEN ? AND ?`,
+       AND exercise_date >= ?
+       AND exercise_date < ?`,
     [userId, startDate, endDate]
   );
+
   return Number(rows[0]?.count) || 0;
 };
 
@@ -22,9 +24,11 @@ const getNoShowCount = async ({ userId, startDate, endDate }) => {
      FROM exercise_records
      WHERE user_id = ?
        AND is_success = 0
-       AND exercise_date BETWEEN ? AND ?`,
+       AND exercise_date >= ?
+       AND exercise_date < ?`,
     [userId, startDate, endDate]
   );
+
   return Number(rows[0]?.count) || 0;
 };
 
@@ -34,9 +38,11 @@ const getNoShowLossAmount = async ({ userId, startDate, endDate }) => {
      FROM exercise_records
      WHERE user_id = ?
        AND is_success = 0
-       AND exercise_date BETWEEN ? AND ?`,
+       AND exercise_date >= ?
+       AND exercise_date < ?`,
     [userId, startDate, endDate]
   );
+
   return Number(rows[0]?.total) || 0;
 };
 
@@ -45,7 +51,8 @@ const getTotalExpenseAmount = async ({ userId, startDate, endDate }) => {
     `SELECT IFNULL(SUM(total_amount), 0) AS total
      FROM tickets
      WHERE user_id = ?
-       AND created_at BETWEEN ? AND ?`,
+       AND created_at >= ?
+       AND created_at < ?`,
     [userId, startDate, endDate]
   );
 
@@ -53,7 +60,8 @@ const getTotalExpenseAmount = async ({ userId, startDate, endDate }) => {
     `SELECT IFNULL(SUM(amount), 0) AS total
      FROM expenses
      WHERE user_id = ?
-       AND expense_date BETWEEN ? AND ?`,
+       AND expense_date >= ?
+       AND expense_date < ?`,
     [userId, startDate, endDate]
   );
 
@@ -64,11 +72,6 @@ const getTotalExpenseAmount = async ({ userId, startDate, endDate }) => {
 // 2) Goal 데이터
 // ===========================
 
-/**
- * 운동별 목표 횟수 (ticket.target_count)
- * - 해당 월에 "겹치는(유효한)" 티켓들의 target_count 합산
- *   start_date <= endDate AND end_date >= startDate
- */
 const getTargetCountByExerciseType = async ({
   userId,
   exerciseType,
@@ -80,18 +83,14 @@ const getTargetCountByExerciseType = async ({
      FROM tickets
      WHERE user_id = ?
        AND exercise_type = ?
-       AND start_date <= ?
+       AND start_date < ?
        AND end_date >= ?`,
     [userId, exerciseType, endDate, startDate]
   );
+
   return Number(rows[0]?.target) || 0;
 };
 
-/**
- * 운동별 성공 횟수
- * - exercise_record(ticket_id) -> ticket.exercise_type 조인
- * - 월 기준은 exercise_record.exercise_date
- */
 const getSuccessCountByExerciseType = async ({
   userId,
   exerciseType,
@@ -105,9 +104,11 @@ const getSuccessCountByExerciseType = async ({
      WHERE er.user_id = ?
        AND er.is_success = 1
        AND t.exercise_type = ?
-       AND er.exercise_date BETWEEN ? AND ?`,
+       AND er.exercise_date >= ?
+       AND er.exercise_date < ?`,
     [userId, exerciseType, startDate, endDate]
   );
+
   return Number(rows[0]?.count) || 0;
 };
 
@@ -115,50 +116,50 @@ const getSuccessCountByExerciseType = async ({
 // 3) Charts 데이터
 // ===========================
 
-/**
- * 요일별 운동 횟수
- * MySQL DAYOFWEEK: 1=일 ... 7=토
- * 변환: ((DAYOFWEEK + 5) % 7) → 0=월 ... 6=일
- */
 const getExerciseByDayOfWeek = async ({ userId, startDate, endDate }) => {
   const DOW_EXPR = `((DAYOFWEEK(exercise_date) + 5) % 7)`;
+
   const [rows] = await db.query(
     `SELECT ${DOW_EXPR} AS dow, COUNT(*) AS cnt
      FROM exercise_records
      WHERE user_id = ?
        AND is_success = 1
-       AND exercise_date BETWEEN ? AND ?
+       AND exercise_date >= ?
+       AND exercise_date < ?
      GROUP BY dow`,
     [userId, startDate, endDate]
   );
 
   const result = Array(7).fill(0);
+
   rows.forEach((r) => {
     const dow = Number(r.dow);
     if (dow >= 0 && dow <= 6) result[dow] = Number(r.cnt);
   });
+
   return result;
 };
 
-/**
- * 요일별 지출액
- */
 const getExpenseByDayOfWeek = async ({ userId, startDate, endDate }) => {
   const DOW_EXPR = `((DAYOFWEEK(expense_date) + 5) % 7)`;
+
   const [rows] = await db.query(
     `SELECT ${DOW_EXPR} AS dow, IFNULL(SUM(amount), 0) AS sum_amount
      FROM expenses
      WHERE user_id = ?
-       AND expense_date BETWEEN ? AND ?
+       AND expense_date >= ?
+       AND expense_date < ?
      GROUP BY dow`,
     [userId, startDate, endDate]
   );
 
   const result = Array(7).fill(0);
+
   rows.forEach((r) => {
     const dow = Number(r.dow);
     if (dow >= 0 && dow <= 6) result[dow] = Number(r.sum_amount);
   });
+
   return result;
 };
 
@@ -166,9 +167,6 @@ const getExpenseByDayOfWeek = async ({ userId, startDate, endDate }) => {
 // 4) Breakdown 데이터
 // ===========================
 
-/**
- * 운동 유형별 성공 횟수
- */
 const getExerciseBreakdown = async ({ userId, startDate, endDate }) => {
   const [rows] = await db.query(
     `SELECT t.exercise_type AS label, COUNT(*) AS count
@@ -176,17 +174,16 @@ const getExerciseBreakdown = async ({ userId, startDate, endDate }) => {
      JOIN tickets t ON t.id = er.ticket_id
      WHERE er.user_id = ?
        AND er.is_success = 1
-       AND er.exercise_date BETWEEN ? AND ?
+       AND er.exercise_date >= ?
+       AND er.exercise_date < ?
      GROUP BY t.exercise_type
      ORDER BY count DESC`,
     [userId, startDate, endDate]
   );
+
   return rows.map((r) => ({ label: r.label, count: Number(r.count) }));
 };
 
-/**
- * 운동 유형별 미참석
- */
 const getNoShowBreakdown = async ({ userId, startDate, endDate }) => {
   const [rows] = await db.query(
     `SELECT t.exercise_type AS label, COUNT(*) AS count
@@ -194,18 +191,33 @@ const getNoShowBreakdown = async ({ userId, startDate, endDate }) => {
      JOIN tickets t ON t.id = er.ticket_id
      WHERE er.user_id = ?
        AND er.is_success = 0
-       AND er.exercise_date BETWEEN ? AND ?
+       AND er.exercise_date >= ?
+       AND er.exercise_date < ?
      GROUP BY t.exercise_type
      ORDER BY count DESC`,
     [userId, startDate, endDate]
   );
+
   return rows.map((r) => ({ label: r.label, count: Number(r.count) }));
 };
 
-/**
- * 실패 사유 메모
- */
-const getFailureMemos = async ({ userId, startDate, endDate }) => {
+const getFailureMemos = async ({
+  userId,
+  exerciseType,
+  startDate,
+  endDate,
+}) => {
+  const params = [userId];
+
+  let exerciseTypeCondition = "";
+
+  if (exerciseType) {
+    exerciseTypeCondition = "AND t.exercise_type = ?";
+    params.push(exerciseType);
+  }
+
+  params.push(startDate, endDate);
+
   const [rows] = await db.query(
     `SELECT 
        DATE_FORMAT(er.exercise_date, '%m/%d') AS date,
@@ -216,39 +228,40 @@ const getFailureMemos = async ({ userId, startDate, endDate }) => {
      WHERE er.user_id = ?
        AND er.is_success = 0
        AND er.failure_reason IS NOT NULL
-       AND er.exercise_date BETWEEN ? AND ?
+       ${exerciseTypeCondition}
+       AND er.exercise_date >= ?
+       AND er.exercise_date < ?
      ORDER BY er.exercise_date DESC`,
-    [userId, startDate, endDate]
+    params
   );
+
   return rows || [];
 };
 
-/**
- * 지출 카테고리별 분석
- * - 운동비(tickets): created_at 기준
- * - 기타비용(expenses): category별
- */
 const getExpenseBreakdown = async ({ userId, startDate, endDate }) => {
   const [rows] = await db.query(
-    `SELECT label, SUM(amount) AS amount
+    `SELECT label, IFNULL(SUM(amount), 0) AS amount
      FROM (
-       SELECT '운동비' AS label, SUM(total_amount) AS amount
+       SELECT '운동비' AS label, IFNULL(SUM(total_amount), 0) AS amount
        FROM tickets
        WHERE user_id = ?
-         AND created_at BETWEEN ? AND ?
+         AND created_at >= ?
+         AND created_at < ?
 
        UNION ALL
 
-       SELECT category AS label, SUM(amount) AS amount
+       SELECT category AS label, IFNULL(SUM(amount), 0) AS amount
        FROM expenses
        WHERE user_id = ?
-         AND expense_date BETWEEN ? AND ?
+         AND expense_date >= ?
+         AND expense_date < ?
        GROUP BY category
      ) AS combined
      GROUP BY label
      ORDER BY amount DESC`,
     [userId, startDate, endDate, userId, startDate, endDate]
   );
+
   return rows.map((r) => ({ label: r.label, amount: Number(r.amount) }));
 };
 
@@ -257,21 +270,17 @@ const getExpenseBreakdown = async ({ userId, startDate, endDate }) => {
 // ===========================
 
 module.exports = {
-  // KPI
   getTotalExerciseCount,
   getNoShowCount,
   getNoShowLossAmount,
   getTotalExpenseAmount,
 
-  // Goal
   getTargetCountByExerciseType,
   getSuccessCountByExerciseType,
 
-  // Charts
   getExerciseByDayOfWeek,
   getExpenseByDayOfWeek,
 
-  // Breakdown
   getExerciseBreakdown,
   getNoShowBreakdown,
   getFailureMemos,
