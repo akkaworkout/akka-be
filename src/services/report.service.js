@@ -136,6 +136,7 @@ const getMonthlyReport = async ({ userId, year, month, exerciseType }) => {
 
   const failMemos = await reportModel.getFailureMemos({
     userId,
+    exerciseType,
     startDate: start,
     endDate: end,
   });
